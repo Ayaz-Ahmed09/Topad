@@ -8,10 +8,11 @@ import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { AdSenseScript } from "@/components/AdSenseScript";
 import CookieConsent from "@/components/CookieConsent";
 import { Suspense } from "react";
-
+import { Analytics } from "@vercel/analytics/next";
+import FloatingButtons from "@/components/FloatingButtons";
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  weight: ["300", "500", "600", "700", "400", "900"],
   variable: "--font-inter",
 });
 
@@ -22,7 +23,7 @@ const playfair = Playfair_Display({
 });
 const openSans = Open_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["300", "400", "700", "800"],
   variable: "--font-open-sans",
 });
 export const metadata: Metadata = {
@@ -58,23 +59,14 @@ export const metadata: Metadata = {
       "Elite digital marketing agency specializing in Google Ads management and premium web development services.",
     images: [
       {
-        url: "https://topad.site/og-image.jpg",
+        url: "https://topad.site/og-image.png",
         width: 1200,
         height: 630,
         alt: "Top AD Runner - Premium Digital Marketing",
       },
     ],
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Top AD Runner | Premium Digital Marketing & Web Development",
-    description:
-      "Elite digital marketing agency specializing in Google Ads management and premium web development services.",
-    images: ["https://topad.site/og-image.jpg"],
-  },
-  verification: {
-    google: "your-google-verification-code",
-  },
+
   generator: "NextJs",
 };
 
@@ -89,43 +81,43 @@ export default function RootLayout({
       className={`scroll-smooth ${inter.variable} ${playfair.variable} `}
     >
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/favicon_io/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/favicon_io/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/favicon_io/favicon-16x16.png"
+        />
+        {/* <link rel="manifest" href="/favicon_io/site.webmanifest" /> */}
         <link rel="canonical" href="https://topad.site" />
         <AdSenseScript />
       </head>
       <body
-        className={`${openSans.variable} antialiased min-h-screen bg-theme-gradient backdrop-blur-sm  text-foreground`}
+        className={`${inter.variable} antialiased min-h-screen bg-theme-gradient backdrop-blur-sm  text-foreground`}
       >
         <div className="flex flex-col min-h-screen relative">
-          {/* <div
-            className="pointer-events-none fixed relative top-0 left-0  w-full min-h-full z-0 opacity-30 "
-            aria-hidden="true"
-            style={{
-              backgroundImage: "url('/textures/brushed-left.png')",
-              backgroundSize: "contain",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "top left",
-              mixBlendMode: "overlay",
-
-              filter: "blur(0px)",
-            }}
-          /> */}
-          {/* Elegant background texture */}
-          {/* <div
-            className="fixed inset-0 bg-elegant-texture opacity-30 pointer-events-none"
-            aria-hidden="true"
-          /> */}
-
-          {/* Floating geometric shapes */}
-
           <Suspense
             fallback={
               <div className="h-20 bg-white/80 backdrop-blur-xl shadow-sm animate-pulse"></div>
             }
           >
             <Header />
-            <main className="flex-grow relative ">{children}</main>
-            <Footer />
+            <main className=" relative ">
+              {children}
+              <Analytics />
+              <Footer />
+              <FloatingButtons />
+            </main>
           </Suspense>
         </div>
         <GoogleAnalytics />
@@ -134,3 +126,4 @@ export default function RootLayout({
     </html>
   );
 }
+false;

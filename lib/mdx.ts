@@ -296,7 +296,7 @@ const samplePosts = [
         "Compare Facebook Ads and Google Ads to determine which platform delivers better ROI for your business goals and target audience.",
       author: "Top AD Runner Team",
       tags: ["Facebook Ads", "Google Ads", "Comparison", "ROI"],
-      image: "/facebook-vs-google-ads-2024.png?height=400&width=800",
+      image: "/facebook-vs-google-ads-2024.png",
     },
     content: `
 # Facebook Ads vs Google Ads: Which Platform Wins in 2024?
@@ -339,7 +339,7 @@ Top AD Runner manages both Google Ads and Facebook Ads to maximize your ROI.
         "Detailed comparison of WordPress and Shopify to help you choose the right platform for your business website or online store.",
       author: "Top AD Runner Team",
       tags: ["WordPress", "Shopify", "E-commerce", "Website"],
-      image: "/wordpress.jpeg?height=400&width=800",
+      image: "/wordpress.jpeg",
     },
     content: `
       <h1>WordPress vs Shopify: Complete Platform Comparison 2024</h1>
@@ -382,7 +382,7 @@ Top AD Runner manages both Google Ads and Facebook Ads to maximize your ROI.
         "Master conversion rate optimization with proven strategies, tools, and techniques to turn more visitors into customers.",
       author: "Top AD Runner Team",
       tags: ["CRO", "Conversion", "Optimization", "Analytics"],
-      image: "/conversion-and-optimization.jpeg?height=400&width=800",
+      image: "/conversion-and-optimization.jpeg",
     },
     content: `
       <h1>Conversion Rate Optimization: The Ultimate Guide</h1>
@@ -427,7 +427,7 @@ Top AD Runner manages both Google Ads and Facebook Ads to maximize your ROI.
         "Dominate local search results with this comprehensive local SEO guide designed specifically for small businesses.",
       author: "Top AD Runner Team",
       tags: ["Local SEO", "Small Business", "Google My Business", "SEO"],
-      image: "/local-SEO.jpg?height=400&width=800",
+      image: "/local-SEO.jpg",
     },
     content: `
       <h1>Local SEO for Small Businesses: Complete 2024 Guide</h1>

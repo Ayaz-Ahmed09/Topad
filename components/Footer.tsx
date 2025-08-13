@@ -218,16 +218,7 @@ export default function Footer() {
                   href: "https://facebook.com",
                   color: "hover:bg-blue-500",
                 },
-                {
-                  icon: Twitter,
-                  href: "https://twitter.com",
-                  color: "hover:bg-sky-500",
-                },
-                {
-                  icon: Linkedin,
-                  href: "https://linkedin.com",
-                  color: "hover:bg-blue-600",
-                },
+             
                 {
                   icon: Instagram,
                   href: "https://instagram.com",

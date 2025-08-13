@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Crown, Sparkles } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import LanguageSelector from "./LanguageSelector";
-import DarkModeToggle from "./DarkModeToggle";
 import Logo from "../public/logo.png";
 import Image from "next/image";
+import { track } from "@vercel/analytics";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -45,18 +45,11 @@ export default function Header() {
                 width={40}
                 className="hover:animate-glow backdrop-grayscale bg-gradient-to-b from-white/50 to-black/50 rounded-full  p-1"
               />
-
-              {/* <div className="absolute -top-1 -right-1">
-                <Sparkles className="text-accent-400 animate-pulse" size={16} />
-              </div> */}
             </div>
             <div>
               <span className="text-2xl font-display font-bold text-ice">
                 Top AD
               </span>
-              {/* <div className="text-xs text-primary-500 font-medium">
-                Premium Agency
-              </div> */}
             </div>
           </Link>
 
@@ -78,9 +71,10 @@ export default function Header() {
 
           <div className="hidden lg:block f4">
             <Link
-              href="https://wa.me/1234567890?text=Hi! I'm interested in your premium services"
+              onClick={() => track("Chat Now Clicked")}
+              href="https://wa.me/923096194974?text=Hi! I'm interested in your premium services"
               target="_blank"
-              className="bg-gradient-to-r from-black/50 to-white/60 text-white px-6 py-3 rounded-2xl hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 font-semibold shadow-xl hover:shadow-2xl flex items-center space-x-2"
+              className="bg-gradient-to-r from-black/50 to-white/60 text-white px-6 py-3 rounded-2xl hover:from-to-white/60 hover:to-orange-500 transition-all duration-300 transform hover:scale-105 font-semibold shadow-xl hover:shadow-2xl flex items-center space-x-2"
             >
               <span>💬</span>
               <span>Chat Now</span>
@@ -102,24 +96,24 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-white/20 shadow-2xl">
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-white/35 backdrop-blur-xl border-b border-white/20 shadow-2xl">
             <div className="container-custom py-6">
               <div className="flex flex-col space-y-6">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="text-primary-700 hover:text-accent-600 transition-colors font-medium text-lg"
+                    className="text-orange hover:text-accent-600 transition-colors font-bold text-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.name}
                   </Link>
                 ))}
-                <LanguageSelector />
+                {/* <LanguageSelector /> */}
                 <Link
-                  href="https://wa.me/1234567890?text=Hi! I'm interested in your premium services"
+                  href="https://wa.me/923096194974?text=Hi! I'm interested in your premium services"
                   target="_blank"
-                  className="bg-gradient-to-r from-black/50 to-white/50 text-white px-6 py-3 rounded-2xl hover:from-emerald-600 hover:to-emerald-700 transition-all text-center font-semibold shadow-xl flex items-center justify-center space-x-2"
+                  className="bg-gradient-to-r from-black/50 to-white/50 text-white px-6 py-3 rounded-2xl hover:from-white/60 hover:to-orange-500 transition-all text-center font-semibold shadow-xl flex items-center justify-center space-x-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <span>💬</span>
