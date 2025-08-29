@@ -37,14 +37,14 @@ export default function BlogCard({ post }: BlogCardProps) {
         </div>
       )}
       <div className="p-6">
-        <div className="text-sm text-white/50 mb-2">
+        <div className="text-sm text-white mb-2">
           {new Date(post.frontmatter.date).toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
             day: "numeric",
           })}
         </div>
-        <h3 className="text-xl font-semibold text-white/80 mt-4 mb-2">
+        <h3 className="text-xl font-semibold text-white mt-4 mb-2">
           <Link
             href={`/blog/${post.slug}?utm_source=blog_card&utm_medium=title&utm_campaign=blog_traffic`}
             className="hover:text-orange-500 transition-colors"
@@ -52,7 +52,7 @@ export default function BlogCard({ post }: BlogCardProps) {
             {post.frontmatter.title}
           </Link>
         </h3>
-        <p className="text-gray-600 mb-4">{post.frontmatter.excerpt}</p>
+        <p className="text-gray-200 mb-4">{post.frontmatter.excerpt}</p>
         {post.frontmatter.tags && (
           <div className="flex flex-wrap gap-2 mb-4">
             {post.frontmatter.tags.slice(0, 3).map((tag) => (

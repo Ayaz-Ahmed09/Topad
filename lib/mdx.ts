@@ -505,7 +505,7 @@ export async function getAllPosts(): Promise<Post[]> {
       return [];
     }
 
-    const posts = mdxFiles
+    return mdxFiles
       .map((file) => {
         try {
           const slug = file.replace(".mdx", " ");
@@ -529,8 +529,6 @@ export async function getAllPosts(): Promise<Post[]> {
           new Date(b.frontmatter.date).getTime() -
           new Date(a.frontmatter.date).getTime()
       );
-
-    return posts;
   } catch (error) {
     console.error("Error in getAllPosts:", error);
     return [];

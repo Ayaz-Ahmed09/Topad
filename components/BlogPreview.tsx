@@ -31,7 +31,7 @@ export default async function BlogPreview() {
           <h2 className="text-3xl md:text-4xl font-bold font-display text-white/80 mb-4">
             Latest from Our Blog
           </h2>
-          <p className="text-xl text-white/50">
+          <p className="text-xl text-white">
             Stay updated with the latest Google Ads insights and strategies
           </p>
         </div>

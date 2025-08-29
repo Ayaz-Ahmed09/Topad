@@ -1,15 +1,15 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Open_Sans } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Script from "next/script";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { AdSenseScript } from "@/components/AdSenseScript";
 import CookieConsent from "@/components/CookieConsent";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
-import FloatingButtons from "@/components/FloatingButtons";
 const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "500", "600", "700", "400", "900"],
@@ -21,11 +21,7 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-playfair",
 });
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "700", "800"],
-  variable: "--font-open-sans",
-});
+
 export const metadata: Metadata = {
   title: {
     default: "Top AD Runner | Premium Digital Marketing & Web Development",
@@ -34,7 +30,7 @@ export const metadata: Metadata = {
   description:
     "Top AD Runner - Elite digital marketing agency specializing in Google Ads management, premium web development, Shopify stores, and conversion optimization. Transform your business with our proven strategies.",
   keywords:
-    "premium digital marketing, Google Ads management, luxury web development, Shopify development, conversion optimization, PPC advertising, search engine marketing, e-commerce development, responsive web design, Google Ads expert, Facebook Ads, digital advertising, online marketing agency",
+    "premium digital marketing, Google Ads management, web development, Shopify development, conversion optimization, PPC advertising, search engine marketing, e-commerce development, responsive web design, Google Ads expert, Facebook Ads, digital advertising, online marketing agency",
   authors: [{ name: "Top AD Runner" }],
   creator: "Top AD Runner",
   publisher: "Top AD Runner",
@@ -62,7 +58,7 @@ export const metadata: Metadata = {
         url: "https://topad.site/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Top AD Runner - Premium Digital Marketing",
+        alt: "Top AD Runner -  Digital Marketing",
       },
     ],
   },
@@ -81,11 +77,7 @@ export default function RootLayout({
       className={`scroll-smooth ${inter.variable} ${playfair.variable} `}
     >
       <head>
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/favicon_io/apple-touch-icon.png"
-        />
+        {/* <meta name="google-adsense-account" content="ca-pub-1241486495309147" /> */}
         <link
           rel="icon"
           type="image/png"
@@ -100,10 +92,15 @@ export default function RootLayout({
         />
         {/* <link rel="manifest" href="/favicon_io/site.webmanifest" /> */}
         <link rel="canonical" href="https://topad.site" />
+        <Script
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1241486495309147"
+          crossOrigin="anonymous"
+        />
         <AdSenseScript />
+        <GoogleAnalytics />
       </head>
       <body
-        className={`${inter.variable} antialiased min-h-screen bg-theme-gradient backdrop-blur-sm  text-foreground`}
+        className={`${inter.variable} antialiased min-h-screen bg-theme-gradient backdrop-brightness-75  text-foreground`}
       >
         <div className="flex flex-col min-h-screen relative">
           <Suspense
@@ -112,18 +109,16 @@ export default function RootLayout({
             }
           >
             <Header />
-            <main className=" relative ">
+            <main className=" relative pt-24  ">
               {children}
               <Analytics />
               <Footer />
-              <FloatingButtons />
+              {/* <FloatingButtons /> */}
             </main>
           </Suspense>
         </div>
-        <GoogleAnalytics />
         <CookieConsent />
       </body>
     </html>
   );
 }
-false;

@@ -17,13 +17,13 @@ export default function Hero() {
 
           {/* Main Heading */}
           <h1 className="text-5xl text-white/80 md:text-7xl lg:text-8xl font-display font-bold mb-8 leading-tight ">
-            Elevate Your Business with{" "}
+            Elevate Your Business with
             <span className="text-warm block mt-2">Elite Marketing</span>
           </h1>
 
           {/* Subheading */}
           <p
-            className="text-xl md:text-2xl lg:text-3xl mb-12 text-white/25 max-w-5xl mx-auto leading-relaxed  "
+            className="text-xl md:text-2xl lg:text-3xl mb-12 text-readable max-w-5xl mx-auto leading-relaxed  "
             style={{ animationDelay: "0.2s" }}
           >
             Top AD Runner delivers exceptional ROI through masterful Google Ads

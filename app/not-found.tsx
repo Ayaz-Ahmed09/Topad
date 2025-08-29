@@ -1,20 +1,23 @@
-import Link from "next/link"
-import type { Metadata } from "next"
+import Link from "next/link";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "404 - Page Not Found",
-  description: "The page you are looking for could not be found. Return to our homepage or browse our services.",
-}
+  description:
+    "The page you are looking for could not be found. Return to our homepage or browse our services.",
+};
 
 export default function NotFound() {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto text-center">
         <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
-        <h2 className="text-3xl font-bold text-gray-700 mb-6">Page Not Found</h2>
+        <h2 className="text-3xl font-bold text-gray-700 mb-6">
+          Page Not Found
+        </h2>
         <p className="text-xl text-gray-600 mb-8">
-          Sorry, the page you are looking for could not be found. It might have been moved, deleted, or you entered the
-          wrong URL.
+          Sorry, the page you are looking for could not be found. It might have
+          been moved, deleted, or you entered the wrong URL.
         </p>
 
         <div className="space-y-4">
@@ -42,5 +45,5 @@ export default function NotFound() {
         </div>
       </div>
     </div>
-  )
+  );
 }

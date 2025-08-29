@@ -35,7 +35,7 @@ export default function BlogJsonLd({ post }: BlogJsonLdProps) {
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://yourwebsite.com/blog/${post.slug}`,
+      "@id": `https://topad.site/blog/${post.slug}`,
     },
     keywords: post.frontmatter.tags?.join(", "),
   };

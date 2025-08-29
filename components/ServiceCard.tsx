@@ -90,13 +90,13 @@ export default function ServiceCard({
       {/* Card Header with Pattern */}
       <div className={`${pattern} p-8 relative overflow-hidden text-white`}>
         <div className="absolute top-0 right-0 opacity-20 group-hover:opacity-80 transition-opacity duration-500">
-          <Icon size={50} className="text-black" />
+          <Icon size={50} className="text-fire" />
         </div>
         <div className="relative z-10">
           <h3 className="text-2xl font-display text-warm font-bold mb-4">
             {title}
           </h3>
-          <p className="text-black/80 leading-relaxed ">{description}</p>
+          <p className="text-readable leading-relaxed ">{description}</p>
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export default function ServiceCard({
       <div className="p-8">
         <ul className="space-y-4 mb-8">
           {features.map((feature, index) => (
-            <li key={index} className="flex items-center text-black/50">
+            <li key={index} className="flex items-center text-ice">
               <div className="bg-black rounded-full p-1 mr-4">
                 <Check className="text-orange-600 text-xl" size={16} />
               </div>
@@ -117,7 +117,7 @@ export default function ServiceCard({
         <Link
           href={link}
           target="_blank"
-          className="group/btn w-full bg-gradient-to-r from-orange-500 to-black-600 text-white px-6 py-4 rounded-2xl hover:bg-schema-card hover:text-warm transition-all font-semibold flex items-center justify-center shadow-xl hover:animate-glow "
+          className="group/btn w-full bg-gradient-to-r from-orange-500 to-black/10 text-white px-6 py-4 rounded-2xl hover:bg-schema-card hover:text-warm transition-all font-semibold flex items-center justify-center shadow-xl hover:animate-glow "
         >
           <span>Start Premium Project</span>
           <ArrowRight

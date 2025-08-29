@@ -52,7 +52,7 @@ export default function TrustSection() {
             Trusted by 200+ Businesses
           </div>
           <h2 className="text-4xl md:text-5xl font-display font-bold text-white/80 mb-6">
-            Why Top AD Runner is Your{" "}
+            Why Top AD Runner is Your
             <span className="text-warm">Trusted Partner</span>
           </h2>
           <p className="text-xl text-white/30 font-sans max-w-3xl mx-auto">

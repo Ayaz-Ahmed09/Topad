@@ -229,7 +229,7 @@ export default async function BlogPost({ params }: Props) {
             )}
           </header>
 
-          <div className="prose text-white prose-lg max-w-none">
+          <div className="prose text-white schema-card p-6  max-w-none">
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
         </div>

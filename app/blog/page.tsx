@@ -24,7 +24,7 @@ export default async function BlogPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-white/80 mb-4">
             Google Ads & Development Blog
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-100 max-w-3xl mx-auto">
             Expert insights, proven strategies, and actionable tips to dominate
             Google Ads and build high-converting websites
           </p>
@@ -32,10 +32,8 @@ export default async function BlogPage() {
 
         {posts.length === 0 ? (
           <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Coming Soon!
-            </h2>
-            <p className="text-gray-600">
+            <h2 className="text-2xl font-bold text-ice mb-4">Coming Soon!</h2>
+            <p className="text-mystic">
               We're working on amazing content for you. Check back soon!
             </p>
           </div>
