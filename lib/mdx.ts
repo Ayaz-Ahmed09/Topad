@@ -508,7 +508,7 @@ export async function getAllPosts(): Promise<Post[]> {
     return mdxFiles
       .map((file) => {
         try {
-          const slug = file.replace(".mdx", " ");
+          const slug = file.replace(".mdx", "");
           const filePath = path.join(contentDirectory, file);
           const fileContent = fs.readFileSync(filePath, "utf8");
           const { data: frontmatter, content } = matter(fileContent);
