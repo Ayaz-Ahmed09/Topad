@@ -79,22 +79,9 @@ export default function RootLayout({
       <head>
         <meta name="google-adsense-account" content="ca-pub-1241486495309147" />
         <meta name="google-site-verification" content="your-verification-code" />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon_io/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon_io/favicon-16x16.png"
-        />
-        <link rel="manifest" href="/favicon_io/site.webmanifest" />
-        <link rel="canonical" href="https://topad.site" />
+        
         <Script
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1241486495309147"
+          {`src=https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1241486495309147`}
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
