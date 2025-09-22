@@ -10,7 +10,7 @@ import Counter from "@/components/Counter";
 import FoundersSection from "@/components/FoundersSection";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import { DisplayAd } from "@/components/AdSenseComponents";
-
+import AdSenseScript from '@/components/AdSenseScript'
 export const metadata: Metadata = {
   title: "Top AD Runner | Google Ads Expert & Web Development Services",
   description:
