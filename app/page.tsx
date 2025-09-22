@@ -28,10 +28,10 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <main>
-      <head>
+      
       <title>topad</title>
        <GoogleAdSense adClient={"ca-pub-1241486495309147"}/>
-        </head>
+        
       <Hero />
       <Services />
       <TrustSection />
