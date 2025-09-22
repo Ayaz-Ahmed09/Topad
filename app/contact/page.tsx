@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ContactForm from "@/components/ContactForm";
+import { DisplayAd } from "@/components/AdSenseComponents";
 
 export const metadata: Metadata = {
   title: "Contact Us - Get Your Free Digital Marketing Consultation",
@@ -29,6 +30,7 @@ export default function ContactPage() {
         <div className="grid lg:grid-cols-2 gap-12">
           <div>
             <ContactForm />
+            <DisplayAd />
           </div>
 
           <div>

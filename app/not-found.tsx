@@ -5,6 +5,12 @@ export const metadata: Metadata = {
   title: "404 - Page Not Found",
   description:
     "The page you are looking for could not be found. Return to our homepage or browse our services.",
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+  },
 };
 
 export default function NotFound() {

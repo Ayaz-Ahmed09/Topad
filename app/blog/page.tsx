@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getAllPosts } from "@/lib/mdx";
 import BlogCard from "@/components/BlogCard";
+import { DisplayAd } from "@/components/AdSenseComponents";
 
 export const metadata: Metadata = {
   title: "Google Ads & Web Development Blog - Expert Tips & Strategies",
@@ -40,12 +41,21 @@ export default async function BlogPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map((post, index) => (
-              <div key={post.slug}>
+              <div key={post.slug} className="relative">
                 <BlogCard post={post} />
+                {(index + 1) % 3 === 0 && (
+                  <div className="mt-8">
+                    <DisplayAd />
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
+        
+        <div className="mt-16">
+          <DisplayAd />
+        </div>
       </div>
     </div>
   );

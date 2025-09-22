@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Shield, Lock, Eye, UserCheck, FileText, Mail } from "lucide-react";
+import { DisplayAd } from "@/components/AdSenseComponents";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - TopAd Digital Marketing & Web Development",
@@ -91,6 +92,7 @@ export default function PrivacyPolicyPage() {
             </section>
 
             {/* How We Use Information */}
+            <DisplayAd />
             <section className="schema-card">
               <div className="flex items-center mb-6">
                 <UserCheck className="w-8 h-8 text-orange-400 mr-4" />
@@ -232,6 +234,7 @@ export default function PrivacyPolicyPage() {
             </section>
 
             {/* Third-Party Services */}
+            <DisplayAd />
             <section className="schema-card">
               <h2 className="text-3xl font-bold text-ice mb-6">Third-Party Services and Integrations</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

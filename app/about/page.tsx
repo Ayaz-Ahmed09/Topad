@@ -10,6 +10,7 @@ import {
   CheckCircle,
   TrendingUp,
 } from "lucide-react";
+import { DisplayAd } from "@/components/AdSenseComponents";
 
 export const metadata: Metadata = {
   title: "About TopAd - Digital Marketing Experts & Web Development Leaders",
@@ -67,6 +68,7 @@ export default function AboutPage() {
           </div>
 
           {/* Founders Section */}
+          <DisplayAd />
           <div className="mb-16">
             <h2 className="text-4xl font-bold text-heading-readable text-center mb-12">
               Meet Our Founders
@@ -127,6 +129,7 @@ export default function AboutPage() {
           </div>
 
           {/* Vision & Mission */}
+          <DisplayAd />
           <div className="grid md:grid-cols-2 gap-8 mb-16">
             <div className="schema-card">
               <div className="flex items-center mb-6">

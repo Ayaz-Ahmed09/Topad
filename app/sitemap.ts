@@ -50,6 +50,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly" as "yearly",
       priority: 0.3,
     },
+    {
+      url: `${BASE_URL}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as "weekly",
+      priority: 0.9,
+    },
   ];
 
   return [...staticUrls, ...blogPostUrls];

@@ -77,7 +77,8 @@ export default function RootLayout({
       className={`scroll-smooth ${inter.variable} ${playfair.variable} `}
     >
       <head>
-        {/* <meta name="google-adsense-account" content="ca-pub-1241486495309147" /> */}
+        <meta name="google-adsense-account" content="ca-pub-1241486495309147" />
+        <meta name="google-site-verification" content="your-verification-code" />
         <link
           rel="icon"
           type="image/png"
@@ -90,11 +91,12 @@ export default function RootLayout({
           sizes="16x16"
           href="/favicon_io/favicon-16x16.png"
         />
-        {/* <link rel="manifest" href="/favicon_io/site.webmanifest" /> */}
+        <link rel="manifest" href="/favicon_io/site.webmanifest" />
         <link rel="canonical" href="https://topad.site" />
         <Script
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1241486495309147"
           crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
         <AdSenseScript />
         <GoogleAnalytics />
@@ -103,6 +105,8 @@ export default function RootLayout({
         className={`${inter.variable} antialiased min-h-screen bg-theme-gradient backdrop-brightness-75  text-foreground`}
       >
         <div className="flex flex-col min-h-screen relative">
+          <SEOOptimization />
+          <BotProtection />
           <Suspense
             fallback={
               <div className="h-20 bg-white/80 backdrop-blur-xl shadow-sm animate-pulse"></div>

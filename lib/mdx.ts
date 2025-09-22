@@ -37,7 +37,7 @@ const samplePosts = [
         "Search Ads",
         "Digital Marketing",
       ],
-      image: "/google-ad-guide-2024.jpeg",
+      image: "https://images.pexels.com/photos/265087/pexels-photo-265087.jpeg?auto=compress&cs=tinysrgb&w=800",
     },
     content: `
     <h1>Complete Google Ads Optimization Guide 2024</h1>
@@ -157,7 +157,7 @@ const samplePosts = [
         "Discover the latest web development trends that are shaping the digital landscape in 2024. Stay ahead with cutting-edge technologies.",
       author: "Top AD Runner Team",
       tags: ["Web Development", "Trends", "Technology", "2024"],
-      image: "/web.webp?height=400&width=800",
+      image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800",
     },
     content: `
       <h1>Top Web Development Trends for 2024</h1>
@@ -191,7 +191,7 @@ const samplePosts = [
         "Learn proven Shopify optimization techniques to increase conversion rates and maximize revenue from your e-commerce store.",
       author: "Top AD Runner Team",
       tags: ["Shopify", "E-commerce", "Conversion", "Sales"],
-      image: "/blog.jpeg?height=400&width=800",
+      image: "https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg?auto=compress&cs=tinysrgb&w=800",
     },
     content: `
       <h1>Shopify Conversion Optimization: Boost Your Sales</h1>
@@ -225,7 +225,7 @@ const samplePosts = [
         "Creating high-converting landing pages with proven design principles and optimization techniques used by top marketers.",
       author: "Top AD Runner Team",
       tags: ["Landing Pages", "Design", "Conversion", "UX"],
-      image: "/landing-pages.jpeg",
+      image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800",
     },
     content: `
     <h1>Landing Page Design: 10 Best Practices That Convert</h1>
@@ -382,7 +382,7 @@ Top AD Runner manages both Google Ads and Facebook Ads to maximize your ROI.
         "Master conversion rate optimization with proven strategies, tools, and techniques to turn more visitors into customers.",
       author: "Top AD Runner Team",
       tags: ["CRO", "Conversion", "Optimization", "Analytics"],
-      image: "/conversion-and-optimization.jpeg",
+      image: "https://images.pexels.com/photos/265087/pexels-photo-265087.jpeg?auto=compress&cs=tinysrgb&w=800",
     },
     content: `
       <h1>Conversion Rate Optimization: The Ultimate Guide</h1>
@@ -427,7 +427,7 @@ Top AD Runner manages both Google Ads and Facebook Ads to maximize your ROI.
         "Dominate local search results with this comprehensive local SEO guide designed specifically for small businesses.",
       author: "Top AD Runner Team",
       tags: ["Local SEO", "Small Business", "Google My Business", "SEO"],
-      image: "/local-SEO.jpg",
+      image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800",
     },
     content: `
       <h1>Local SEO for Small Businesses: Complete 2024 Guide</h1>

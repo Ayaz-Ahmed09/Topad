@@ -8,6 +8,9 @@ import TrustSection from "@/components/TrustSection";
 import PerformanceComparison from "@/components/PerformanceComparison";
 import Counter from "@/components/Counter";
 import FoundersSection from "@/components/FoundersSection";
+import WhyChooseUs from "@/components/WhyChooseUs";
+import { DisplayAd } from "@/components/AdSenseComponents";
+
 export const metadata: Metadata = {
   title: "Top AD Runner | Google Ads Expert & Web Development Services",
   description:
@@ -26,10 +29,14 @@ export default function HomePage() {
       <Hero />
       <Services />
       <TrustSection />
+      <DisplayAd />
       <Counter />
+      <WhyChooseUs />
       <PerformanceComparison />
+      <DisplayAd />
       <QuoteGenerator />
       <Testimonials />
+      <DisplayAd />
       <FoundersSection />
       <BlogPreview />
     </>

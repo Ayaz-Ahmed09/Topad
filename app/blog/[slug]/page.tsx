@@ -120,6 +120,7 @@ import { notFound, redirect } from "next/navigation";
 import { getPostBySlug, getAllPosts } from "@/lib/mdx";
 import BlogJsonLd from "@/components/BlogJsonLd";
 import Image from "next/image";
+import { DMCANotice, InArticleAd } from "@/components/AdSenseComponents";
 
 type Props = {
   params: { slug: string };
@@ -184,10 +185,11 @@ export default async function BlogPost({ params }: Props) {
   return (
     <>
       <BlogJsonLd post={post} />
-      {/* Test Animated Slogan */}
 
       <article className="container mx-auto mt-6 px-4 py-20">
         <div className="max-w-4xl mx-auto">
+          <DMCANotice />
+          
           <header className="mb-8">
             <h1 className="text-4xl md:text-5xl font-display tracking-tighter font-bold text-white/80 mb-4">
               {post.frontmatter.title}
@@ -230,7 +232,19 @@ export default async function BlogPost({ params }: Props) {
           </header>
 
           <div className="prose text-white schema-card p-6  max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            <div 
+              dangerouslySetInnerHTML={{ 
+                __html: post.content.replace(
+                  /(<\/p>\s*<p>.*?<\/p>\s*<p>)/g, 
+                  '$1<div class="in-article-ad-placeholder"></div>'
+                )
+              }} 
+            />
+            <InArticleAd />
+          </div>
+          
+          <div className="mt-12">
+            <InArticleAd />
           </div>
         </div>
       </article>

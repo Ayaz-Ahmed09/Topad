@@ -7,6 +7,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { DisplayAd } from "@/components/AdSenseComponents";
 
 export const metadata: Metadata = {
   title: "Terms of Service - TopAd Digital Marketing & Web Development",
@@ -431,6 +432,7 @@ export default function TermsPage() {
             </section>
 
             {/* Client Service Terms */}
+            <DisplayAd />
             <section className="schema-card">
               <div className="flex items-center mb-6">
                 <Users className="w-8 h-8 text-orange-400 mr-4" />
@@ -541,6 +543,7 @@ export default function TermsPage() {
             </section>
 
             {/* Disclaimers and Limitations */}
+            <DisplayAd />
             <section className="schema-card">
               <div className="flex items-center mb-6">
                 <AlertTriangle className="w-8 h-8 text-orange-400 mr-4" />

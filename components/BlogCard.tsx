@@ -16,22 +16,16 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
-  console.log(post.frontmatter.image, "front");
 
   return (
     <article className="schema-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       {post.frontmatter.image && (
         <div className="relative ">
           <Image
-            src={
-              post.frontmatter.image && post.frontmatter.image.startsWith("/")
-                ? post.frontmatter.image
-                : "/placeholder.svg"
-            }
+            src={post.frontmatter.image || "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=800"}
             alt={post.frontmatter.title}
             width={800}
             height={400}
-            // fill
             className="object-cover "
           />
         </div>
