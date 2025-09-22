@@ -2,9 +2,9 @@ import Script from "next/script";
 export function GoogleAnalytics() {
   return (
     <>
-      <Script>
+      <Script
         async src="https://www.googletagmanager.com/gtag/js?id=G-LMSZERLKC8"
-      </Script>
+      />
       <script
         dangerouslySetInnerHTML={{
           __html: `
