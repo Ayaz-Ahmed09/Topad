@@ -394,7 +394,7 @@ export default async function BlogPost({ params }: Props) {
                 </div>
               )}
 
-              {post.frontmatter.image && (
+              
                 <div className="relative h-64 md:h-96 rounded-xl overflow-hidden mb-8 shadow-2xl">
                   <Image
                     src={post.frontmatter.image || "/placeholder.svg"}
@@ -405,7 +405,7 @@ export default async function BlogPost({ params }: Props) {
                     priority
                   />
                 </div>
-              )}
+              
             </header>
 
             {/* Main Content with Integrated Ads and Images */}
