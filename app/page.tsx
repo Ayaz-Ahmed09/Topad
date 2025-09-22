@@ -27,7 +27,7 @@ export default function HomePage() {
   return (
     <main>
       <title>topad</title>
-      <AdSenseScript/>
+       <GoogleAdSense adClient={"ca-pub-1241486495309147"}/>
       <Hero />
       <Services />
       <TrustSection />
