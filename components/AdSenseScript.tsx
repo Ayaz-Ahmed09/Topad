@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 
 export default function GoogleAdSense({ adClient }: { adClient: string }) {
+  const My_Pub_ID='ca-pub-1241486495309147'
   useEffect(() => {
     try {
       const script = document.createElement('script')
