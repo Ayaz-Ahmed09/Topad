@@ -217,7 +217,7 @@ function processContentWithAdsAndImages(content: string): string {
               alt="${alt}" 
               width="${width}" 
               height="${height}"
-              class="w-full h-auto object-cover"
+              class="w-full h-auto object-cover rounded-xl shadow-2xl"
               loading="lazy"
             />
           </div>
@@ -249,15 +249,15 @@ function processContentWithAdsAndImages(content: string): string {
         if (shouldInsertAd) {
           adCount++;
           result.push(`
-            <div class="in-article-ad-wrapper my-12 py-6">
+            <div class="my-12 py-6 border-t border-b border-white/10 bg-white/[0.02]">
               <div class="text-center text-xs text-gray-500 mb-3 uppercase tracking-wider">
                 Advertisement
               </div>
-              <div class="in-article-ad-container flex justify-center">
-                <div class="adsense-ad-placeholder w-full max-w-2xl">
+              <div class="flex justify-center px-4 md:px-0">
+                <div class="w-full max-w-2xl">
                   <ins
                     class="adsbygoogle"
-                    style="display: block; text-align: center; min-height: 250px;"
+                    style="display: block; text-align: center; min-height: 250px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;"
                     data-ad-layout="in-article"
                     data-ad-format="fluid"
                     data-ad-client="ca-pub-1241486495309147"
@@ -291,7 +291,7 @@ function AdInitializer() {
           document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
               try {
-                
+                // Initialize all AdSense ads on the page
                 const ads = document.querySelectorAll('.adsbygoogle');
                 ads.forEach(function(ad, index) {
                   if (!ad.dataset.adsbygoogleStatus) {
@@ -301,7 +301,7 @@ function AdInitializer() {
                       } catch (e) {
                         console.log('Ad initialization error for ad', index, ':', e);
                       }
-                    }, index * 500); 
+                    }, index * 500); // Stagger ad initialization
                   }
                 });
               } catch (e) {
@@ -441,34 +441,7 @@ export default async function BlogPost({ params }: Props) {
         {/* Initialize ads after content loads */}
         <AdInitializer />
 
-        {/* Additional CSS for ad styling */}
-        <style jsx>{`
-          .in-article-ad-wrapper {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.02);
-          }
-          
-          .processed-content img {
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          }
 
-          .adsbygoogle {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            min-height: 250px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-
-          @media (max-width: 768px) {
-            .in-article-ad-container {
-              padding: 0 1rem;
-            }
-          }
-        `}</style>
       </>
     );
   } catch (error) {
