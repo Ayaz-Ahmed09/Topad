@@ -25,7 +25,9 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <>
+    <main>
+      <title>topad</title>
+      <AdSenseScript/>
       <Hero />
       <Services />
       <TrustSection />
@@ -39,6 +41,6 @@ export default function HomePage() {
       <DisplayAd />
       <FoundersSection />
       <BlogPreview />
-    </>
+    </main>
   );
 }
