@@ -934,7 +934,7 @@ export default function TermsPage() {
                   <strong>Questions or Concerns?</strong> We encourage open
                   communication about our terms and policies. If you have
                   questions, concerns, or suggestions for improvement, please
-                  don't hesitate to contact our team. We're committed to fair
+                  don't hesitate to contact our team. We\'re committed to fair
                   and transparent business relationships with all our clients
                   and users.
                 </p>
