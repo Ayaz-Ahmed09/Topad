@@ -86,7 +86,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
-        <AdSenseScript />
+         <GoogleAdSense adClient={"ca-pub-1241486495309147"}/>
         <GoogleAnalytics />
       </head>
       <body
