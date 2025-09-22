@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Script from "next/script";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import { AdSenseScript } from "@/components/AdSenseScript";
+import { GoogleAdSense } from "@/components/AdSenseScript";
 import CookieConsent from "@/components/CookieConsent";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
