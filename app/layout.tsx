@@ -81,7 +81,7 @@ export default function RootLayout({
         <meta name="google-site-verification" content="your-verification-code" />
         
         <Script
-          {`src=https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1241486495309147`}
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1241486495309147"
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
