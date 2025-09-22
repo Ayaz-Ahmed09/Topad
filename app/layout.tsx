@@ -10,6 +10,7 @@ import { AdSenseScript } from "@/components/AdSenseScript";
 import CookieConsent from "@/components/CookieConsent";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
+import {SEOOptimization} from '@/components/SEOOptimization'
 const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "500", "600", "700", "400", "900"],
@@ -93,7 +94,7 @@ export default function RootLayout({
       >
         <div className="flex flex-col min-h-screen relative">
           <SEOOptimization />
-          <BotProtection />
+          {/* <BotProtection /> */}
           <Suspense
             fallback={
               <div className="h-20 bg-white/80 backdrop-blur-xl shadow-sm animate-pulse"></div>
