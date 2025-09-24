@@ -151,7 +151,7 @@ export class UserService {
     const evaluations = await this.getUserEvaluations(userId, 100);
     
     // Calculate average scores from evaluations
-    const avgScores = evaluations.reduce((acc, eval) => {
+    const avgScores = evaluations.reduce((acc, evaluation) => {
       const scores = eval.evaluationResult?.scores || {};
       acc.creativity += scores.creativity || 0;
       acc.viability += scores.viability || 0;
