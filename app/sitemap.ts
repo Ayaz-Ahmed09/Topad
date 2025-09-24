@@ -56,6 +56,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as "weekly",
       priority: 0.9,
     },
+    {
+      url: `${BASE_URL}/tools/ad-evaluator`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as "monthly",
+      priority: 0.8,
+    },
   ];
 
   return [...staticUrls, ...blogPostUrls];
