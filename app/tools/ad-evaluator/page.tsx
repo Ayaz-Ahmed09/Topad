@@ -302,7 +302,221 @@ export default function AdEvaluatorPage() {
     } else if (adData.platform === 'tiktok') {
       if (adData.mediaType === 'video') {
         if (duration >= 9 && duration <= 15) {
-          qualityScore += 25;
+          qualityScore += 25;e="text-sm text-readable space-y-1">
+                              {result.mediaAnalysis.technicalSpecs.map((spec, index) => (
+                                <li key={index} className="flex items-center">
+                                  <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                                  {spec}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {result.mediaAnalysis.recommendations.length > 0 && (
+                          <div>
+                            <h5 className="text-sm font-medium text-orange-400 mb-2">Media Optimization Recommendations</h5>
+                            <ul className="space-y-2">
+                              {result.mediaAnalysis.recommendations.map((rec, index) => (
+                                <li key={index} className="flex items-start space-x-2">
+                                  <Lightbulb className="w-4 h-4 text-yellow-500 mt-1 flex-shrink-0" />
+                                  <span className="text-readable text-sm">{rec}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Detailed Analysis */}
+                    <div className="schema-card p-6">
+                      <h4 className="text-lg font-semibold text-accent-readable mb-4">
+                        Comprehensive Analysis Report
+                      </h4>
+                      <div className="prose prose-sm max-w-none text-readable">
+                        <div className="whitespace-pre-line">{result.analysis}</div>
+                      </div>
+                    </div>
+                    
+                    {/* Recommendations */}
+                    {result.recommendations && result.recommendations.length > 0 && (
+                      <div className="schema-card p-6">
+                        <h4 className="text-lg font-semibold text-accent-readable mb-4">
+                          Priority Optimization Recommendations
+                        </h4>
+                        <ul className="space-y-3">
+                          {result.recommendations.map((rec, index) => (
+                            <li key={index} className="flex items-start space-x-3">
+                              <div className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mt-1">
+                                {index + 1}
+                              </div>
+                              <span className="text-readable">{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+                      <div className="flex items-center">
+                        <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
+                        <span className="text-green-200 font-medium">
+                          Analysis Complete - Advanced Algorithm Engine
+                        </span>
+                      </div>
+                      <span className="text-sm text-green-400">
+                        {new Date(result.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {!result && !isLoading && (
+                  <div className="schema-card text-center p-8">
+                    <Target className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-accent-readable mb-4">
+                      Advanced Algorithm Analysis Ready
+                    </h3>
+                    <p className="text-readable mb-6">
+                      Fill out the form and upload media files for comprehensive algorithmic evaluation.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-readable">
+                      <div className="flex items-center">
+                        <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                        75+ evaluation criteria
+                      </div>
+                      <div className="flex items-center">
+                        <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                        Media file analysis
+                      </div>
+                      <div className="flex items-center">
+                        <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                        Platform optimization
+                      </div>
+                      <div className="flex items-center">
+                        <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                        Industry benchmarks
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <DisplayAd />
+
+      {/* Algorithm Features */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-heading-readable mb-6">
+              Advanced Algorithm Engine
+            </h2>
+            <p className="text-xl text-readable max-w-3xl mx-auto">
+              Pure algorithmic evaluation with 75+ data points and media file analysis
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="schema-card text-center p-6">
+              <Target className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-accent-readable mb-3">
+                75+ Analysis Points
+              </h3>
+              <p className="text-readable text-sm">
+                Comprehensive evaluation including media quality, platform optimization, and audience alignment.
+              </p>
+            </div>
+            
+            <div className="schema-card text-center p-6">
+              <Video className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-accent-readable mb-3">
+                Media File Analysis
+              </h3>
+              <p className="text-readable text-sm">
+                Upload images and videos for technical analysis including resolution, duration, and platform compliance.
+              </p>
+            </div>
+            
+            <div className="schema-card text-center p-6">
+              <BarChart3 className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-accent-readable mb-3">
+                Industry Benchmarks
+              </h3>
+              <p className="text-readable text-sm">
+                Compare against real industry data and platform-specific performance metrics.
+              </p>
+            </div>
+            
+            <div className="schema-card text-center p-6">
+              <Zap className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-accent-readable mb-3">
+                IP-Based Tracking
+              </h3>
+              <p className="text-readable text-sm">
+                Smart usage tracking with 3 free evaluations, then unlimited access after registration.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-heading-readable mb-6">
+                Why Choose Our Advanced Evaluator?
+              </h2>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="schema-card p-8 text-center">
+                <Award className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-accent-readable mb-4">
+                  Pure Algorithm Analysis
+                </h3>
+                <p className="text-readable">
+                  No AI black boxes - transparent algorithmic evaluation with 
+                  detailed scoring across multiple performance dimensions.
+                </p>
+              </div>
+              
+              <div className="schema-card p-8 text-center">
+                <TrendingUp className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-accent-readable mb-4">
+                  Media File Support
+                </h3>
+                <p className="text-readable">
+                  Upload and analyze your actual video and image files with 
+                  technical specifications and platform compliance checking.
+                </p>
+              </div>
+              
+              <div className="schema-card p-8 text-center">
+                <Lightbulb className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-accent-readable mb-4">
+                  Smart Usage Tracking
+                </h3>
+                <p className="text-readable">
+                  IP-based tracking allows 3 free evaluations without registration,
+                  then unlimited access after simple sign-up.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <DisplayAd />
+    </div>
+  );
+}
         } else if (duration > 15 && duration <= 60) {
           qualityScore += 15;
         } else {
