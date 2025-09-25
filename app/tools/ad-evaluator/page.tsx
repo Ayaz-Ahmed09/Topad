@@ -543,25 +543,10 @@ export default function AdEvaluatorPage() {
                   
                   <button
                     type="submit"
-                    disabled={isLoading || (!userInfo && !showLoginForm)}
+                    disabled={isLoading}
                     className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-orange-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                        Analyzing Your Ad...
-                      </>
-                    ) : !userInfo ? (
-                      <>
-                        Create Free Account & Evaluate
-                        <User className="ml-2 h-5 w-5" />
-                      </>
-                    ) : (
-                      <>
-                        Evaluate Ad ({userInfo.remainingUses} left today)
-                        <Zap className="ml-2 h-5 w-5" />
-                      </>
-                    )}
+                   Evaluate now
                   </button>
                 </form>
               </div>
