@@ -5,7 +5,8 @@ import { Target, Zap, BarChart3, Lightbulb, ArrowRight, CheckCircle, AlertCircle
 import { DisplayAd } from '@/components/AdSenseComponents';
 import EvaluationService from '@/lib/evaluation-service';
 import DatabaseService from '@/lib/database-helpers';
-
+import { createClient } from '@supabase/supabase-js'; // Missing
+   // AdEvaluationEngine is used but not imported
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
 
