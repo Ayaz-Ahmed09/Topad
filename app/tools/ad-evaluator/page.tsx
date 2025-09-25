@@ -113,7 +113,7 @@ export default function AdEvaluatorPage() {
     if (savedUser) {
       const user = JSON.parse(savedUser);
       setUserInfo(user);
-      loadUserStats(user.email);
+      loadUserStatsFromService(user.email);;
     }
   }, []);
 
