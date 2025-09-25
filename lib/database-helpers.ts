@@ -250,12 +250,12 @@ export class DatabaseService {
         totalEvaluations: data.evaluation_count || 0,
         remainingFreeUses: Math.max(0, 50 - (data.today_evaluation_count || 0)),
         averageScores: {
-          creativity: Math.round(data.avg_creativity_score || 0),
-          viability: Math.round(data.avg_viability_score || 0),
-          alignment: Math.round(data.avg_alignment_score || 0),
-          engagement: 0, // Add these to the view if needed
+          creativity: 0, // Simplified - just show overall average
+          viability: 0,
+          alignment: 0,
+          engagement: 0,
           conversion: 0,
-          overall: Math.round(data.avg_overall_score || 0)
+          overall: data.avg_overall_score || 0
         },
         lastEvaluationDate: data.last_evaluation_date,
         todayEvaluationCount: data.today_evaluation_count || 0
@@ -279,9 +279,10 @@ export class DatabaseService {
         user_email: userEmail?.toLowerCase() || null,
         ad_data: adData,
         evaluation_result: evaluationResult,
-        media_file_url: null, // No file storage
-        media_type: adData.mediaType || null,
-        media_size: adData.mediaSize || null,
+        overall_score: evaluationResult.scores.overall,
+        platform: adData.platform,
+        industry: adData.industry,
+        media_analyzed: !!adData.mediaFile,
         created_at: new Date().toISOString()
       };
 
@@ -328,6 +329,7 @@ export class DatabaseService {
           overall_score: evaluationResult.scores.overall,
           platform: adData.platform,
           industry: adData.industry,
+          media_analyzed: !!adData.mediaFile,
           created_at: new Date().toISOString()
         })
         .select()
@@ -401,31 +403,27 @@ export class DatabaseService {
   static async getPlatformStats(platform: string) {
     try {
       const { data, error } = await supabase
-        .from('user_evaluations')
-        .select(`
-          overall_score,
-          evaluation_result,
-          created_at
-        `)
+        .from('platform_stats')
+        .select('*')
         .eq('platform', platform)
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
-        .order('created_at', { ascending: false });
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching platform stats:', error);
         return null;
       }
 
-      if (!data || data.length === 0) return null;
-
-      const scores = data.map(d => d.overall_score).filter(s => s !== null);
-      const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+      if (!data) return null;
 
       return {
-        platform,
-        totalEvaluations: data.length,
-        averageScore: Math.round(avgScore),
-        evaluationData: data
+        platform: data.platform,
+        totalEvaluations: data.total_evaluations,
+        averageScore: data.avg_score,
+        mediaEvaluations: data.media_evaluations,
+        recentActivity: {
+          last7Days: data.evaluations_last_7_days,
+          last30Days: data.evaluations_last_30_days
+        }
       };
     } catch (error) {
       console.error('Error in getPlatformStats:', error);
@@ -436,32 +434,27 @@ export class DatabaseService {
   static async getIndustryStats(industry: string) {
     try {
       const { data, error } = await supabase
-        .from('user_evaluations')
-        .select(`
-          overall_score,
-          evaluation_result,
-          platform,
-          created_at
-        `)
+        .from('industry_stats')
+        .select('*')
         .eq('industry', industry)
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
-        .order('created_at', { ascending: false });
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching industry stats:', error);
         return null;
       }
 
-      if (!data || data.length === 0) return null;
-
-      const scores = data.map(d => d.overall_score).filter(s => s !== null);
-      const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+      if (!data) return null;
 
       return {
-        industry,
-        totalEvaluations: data.length,
-        averageScore: Math.round(avgScore),
-        evaluationData: data
+        industry: data.industry,
+        totalEvaluations: data.total_evaluations,
+        averageScore: data.avg_score,
+        mediaEvaluations: data.media_evaluations,
+        recentActivity: {
+          last7Days: data.evaluations_last_7_days,
+          last30Days: data.evaluations_last_30_days
+        }
       };
     } catch (error) {
       console.error('Error in getIndustryStats:', error);
