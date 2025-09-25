@@ -565,7 +565,7 @@ export default function AdEvaluatorPage() {
                   </button>
                 </form>
               </div>
-
+  
               {/* Results Section */}
               <div>
                 {error && (
