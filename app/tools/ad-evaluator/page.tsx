@@ -194,14 +194,32 @@ export default function AdEvaluatorPage() {
   const handleFileUpload = (file: File) => {
     if (!file) return;
 
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size too large. Maximum 10MB allowed for free service.');
+      return;
+    }
+
     const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-    const fileSize = file.size;
+    
+    // Validate file type matches ad type
+    if (adData.adType === 'image' && !file.type.startsWith('image/')) {
+      setError('Please upload an image file for image ad type.');
+      return;
+    }
+    
+    if (adData.adType === 'video' && !file.type.startsWith('video/')) {
+      setError('Please upload a video file for video ad type.');
+      return;
+    }
+
+    setError(null); // Clear any previous errors
     
     setAdData(prev => ({
       ...prev,
       mediaFile: file,
       mediaType: fileType,
-      mediaSize: fileSize
+      mediaSize: file.size
     }));
 
     // For video files, try to get duration and resolution
@@ -214,7 +232,7 @@ export default function AdEvaluatorPage() {
           mediaDuration: video.duration,
           mediaResolution: `${video.videoWidth}x${video.videoHeight}`
         }));
-        window.URL.revokeObjectURL(video.src);
+        URL.revokeObjectURL(video.src);
       };
       video.src = URL.createObjectURL(file);
     } else if (fileType === 'image') {
@@ -224,7 +242,7 @@ export default function AdEvaluatorPage() {
           ...prev,
           mediaResolution: `${img.width}x${img.height}`
         }));
-        window.URL.revokeObjectURL(img.src);
+        URL.revokeObjectURL(img.src);
       };
       img.src = URL.createObjectURL(file);
     }
@@ -640,10 +658,10 @@ export default function AdEvaluatorPage() {
                             <div>
                               <Upload className="h-12 w-12 text-orange-400 mx-auto mb-4" />
                               <h3 className="text-lg font-semibold text-accent-readable mb-2">
-                                Upload Your {adData.adType === 'video' ? 'Video' : 'Image'}
+                                Upload Your {adData.adType === 'video' ? 'Video' : 'Image'} (Max 10MB)
                               </h3>
                               <p className="text-readable mb-4">
-                                Drag and drop your file here, or click to browse
+                                Drag and drop your file here, or click to browse. File will be analyzed in memory only - not stored.
                               </p>
                               <input
                                 ref={fileInputRef}
