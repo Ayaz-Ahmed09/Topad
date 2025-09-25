@@ -154,7 +154,7 @@ export default function AdEvaluatorPage() {
     }
   };
 
-  const loadUserStats = async (email: string) => {
+  const loadUserStatsFromService = async (email: string) => {
     try {
       // Load user stats from database
       const stats = await DatabaseService.getUserStats(email);
