@@ -271,8 +271,7 @@ export class DatabaseService {
     ipAddress: string,
     userEmail: string | null,
     adData: AdData,
-    evaluationResult: EvaluationResult,
-    mediaFileUrl?: string
+    evaluationResult: EvaluationResult
   ) {
     try {
       const evaluationData = {
@@ -280,7 +279,7 @@ export class DatabaseService {
         user_email: userEmail?.toLowerCase() || null,
         ad_data: adData,
         evaluation_result: evaluationResult,
-        media_file_url: mediaFileUrl || null,
+        media_file_url: null, // No file storage
         media_type: adData.mediaType || null,
         media_size: adData.mediaSize || null,
         created_at: new Date().toISOString()
@@ -466,33 +465,6 @@ export class DatabaseService {
       };
     } catch (error) {
       console.error('Error in getIndustryStats:', error);
-      return null;
-    }
-  }
-
-  // Media File Upload Helper
-  static async uploadMediaFile(file: File, userId: string): Promise<string | null> {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `evaluations/${fileName}`;
-
-      const { data, error } = await supabase.storage
-        .from('media-files')
-        .upload(filePath, file);
-
-      if (error) {
-        console.error('Error uploading file:', error);
-        return null;
-      }
-
-      const { data: publicUrl } = supabase.storage
-        .from('media-files')
-        .getPublicUrl(filePath);
-
-      return publicUrl.publicUrl;
-    } catch (error) {
-      console.error('Error in uploadMediaFile:', error);
       return null;
     }
   }
