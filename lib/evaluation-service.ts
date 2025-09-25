@@ -43,19 +43,14 @@ export class EvaluationService {
         user = await DatabaseService.getOrCreateUser(userEmail, userName);
       }
 
-      // Upload media file if present
-      let mediaFileUrl: string | null = null;
-      if (adData.mediaFile && user) {
-        mediaFileUrl = await DatabaseService.uploadMediaFile(adData.mediaFile, user.id);
-      }
-
       // Run the algorithmic evaluation
       const algorithmResult = AdEvaluationEngine.evaluateAd(adData);
 
-      // Analyze media file if present
+      // Analyze media file if present (in memory only - no storage)
       let mediaAnalysis = null;
       if (adData.mediaFile) {
-        mediaAnalysis = this.analyzeMediaFile(adData);
+        mediaAnalysis = await this.analyzeMediaFileInMemory(adData);
+        // File is automatically garbage collected after analysis
       }
 
       // Combine results into comprehensive evaluation
@@ -82,13 +77,12 @@ export class EvaluationService {
         timestamp: new Date().toISOString()
       };
 
-      // Save evaluation to database
+      // Save evaluation to database (without media file)
       await DatabaseService.saveEvaluation(
         ipAddress,
         userEmail || null,
-        adData,
-        evaluationResult,
-        mediaFileUrl || undefined
+        {...adData, mediaFile: undefined}, // Remove file from stored data
+        evaluationResult
       );
 
       // Update usage counts
@@ -166,13 +160,13 @@ export class EvaluationService {
   }
 
   /**
-   * Enhanced media file analysis
+   * Enhanced media file analysis (in memory only - no storage)
    */
-  private static analyzeMediaFile(adData: AdData): {
+  private static async analyzeMediaFileInMemory(adData: AdData): Promise<{
     qualityScore: number;
     recommendations: string[];
     technicalSpecs: string[];
-  } {
+  }> {
     const recommendations: string[] = [];
     const technicalSpecs: string[] = [];
     let qualityScore = 50;
@@ -185,16 +179,38 @@ export class EvaluationService {
       };
     }
 
-    const fileSize = adData.mediaSize || 0;
-    const resolution = adData.mediaResolution || '';
-    const duration = adData.mediaDuration || 0;
+    const fileSize = adData.mediaFile.size;
+    const fileName = adData.mediaFile.name;
+    const fileType = adData.mediaFile.type;
+    
+    // Get file metadata without storing
+    let resolution = '';
+    let duration = 0;
+    
+    try {
+      if (fileType.startsWith('image/')) {
+        const dimensions = await this.getImageDimensions(adData.mediaFile);
+        resolution = `${dimensions.width}x${dimensions.height}`;
+        adData.mediaResolution = resolution;
+      } else if (fileType.startsWith('video/')) {
+        const videoMeta = await this.getVideoMetadata(adData.mediaFile);
+        resolution = `${videoMeta.width}x${videoMeta.height}`;
+        duration = videoMeta.duration;
+        adData.mediaResolution = resolution;
+        adData.mediaDuration = duration;
+      }
+    } catch (error) {
+      console.error('Error getting media metadata:', error);
+    }
+
     const platform = adData.platform;
 
     // Technical specifications
+    technicalSpecs.push(`File name: ${fileName}`);
     technicalSpecs.push(`File size: ${(fileSize / (1024 * 1024)).toFixed(2)} MB`);
+    technicalSpecs.push(`File type: ${fileType}`);
     if (resolution) technicalSpecs.push(`Resolution: ${resolution}`);
     if (duration) technicalSpecs.push(`Duration: ${duration.toFixed(1)} seconds`);
-    technicalSpecs.push(`Media type: ${adData.mediaType}`);
 
     // Platform-specific analysis
     switch (platform) {
@@ -220,11 +236,11 @@ export class EvaluationService {
         qualityScore += this.analyzeGenericMedia(adData, recommendations);
     }
 
-    // File size analysis
+    // File size analysis (10MB limit for free service)
     if (adData.mediaType === 'image') {
       if (fileSize > 10 * 1024 * 1024) { // 10MB
-        recommendations.push('Image file size is too large - compress to under 10MB for faster loading');
-        qualityScore -= 15;
+        recommendations.push('Image file size exceeds 10MB limit - please compress your image');
+        qualityScore -= 20;
       } else if (fileSize < 100 * 1024) { // 100KB
         recommendations.push('Image file size might be too small - ensure sufficient quality for display');
         qualityScore -= 8;
@@ -232,12 +248,9 @@ export class EvaluationService {
         qualityScore += 12;
       }
     } else if (adData.mediaType === 'video') {
-      if (fileSize > 500 * 1024 * 1024) { // 500MB
-        recommendations.push('Video file size is very large - consider compression for better platform compatibility');
-        qualityScore -= 20;
-      } else if (fileSize > 100 * 1024 * 1024) { // 100MB
-        recommendations.push('Video file size is large - may impact loading times on mobile devices');
-        qualityScore -= 10;
+      if (fileSize > 10 * 1024 * 1024) { // 10MB
+        recommendations.push('Video file size exceeds 10MB limit - please compress your video');
+        qualityScore -= 25;
       } else if (fileSize < 1 * 1024 * 1024) { // 1MB
         recommendations.push('Video file size seems small - ensure adequate quality for professional presentation');
         qualityScore -= 5;
@@ -260,6 +273,41 @@ export class EvaluationService {
       recommendations,
       technicalSpecs
     };
+  }
+
+  /**
+   * Get image dimensions without storing the file
+   */
+  private static getImageDimensions(file: File): Promise<{width: number, height: number}> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        URL.revokeObjectURL(img.src); // Clean up
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  /**
+   * Get video metadata without storing the file
+   */
+  private static getVideoMetadata(file: File): Promise<{width: number, height: number, duration: number}> {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        resolve({
+          width: video.videoWidth,
+          height: video.videoHeight,
+          duration: video.duration
+        });
+        URL.revokeObjectURL(video.src); // Clean up
+      };
+      video.onerror = reject;
+      video.src = URL.createObjectURL(file);
+    });
   }
 
   // Platform-specific media analysis methods
@@ -609,15 +657,22 @@ export class EvaluationService {
       errors.push('Target age range is required');
     }
 
-    // Media file validation
+    // Media file validation (10MB limit for free service)
     if ((adData.adType === 'video' || adData.adType === 'image') && !adData.mediaFile) {
       errors.push(`${adData.adType === 'video' ? 'Video' : 'Image'} file is required for this ad type`);
     }
 
     if (adData.mediaFile) {
-      const maxSize = adData.mediaType === 'video' ? 500 * 1024 * 1024 : 10 * 1024 * 1024; // 500MB for video, 10MB for image
+      const maxSize = 10 * 1024 * 1024; // 10MB for both image and video
       if (adData.mediaFile.size > maxSize) {
-        errors.push(`File size too large. Maximum ${adData.mediaType === 'video' ? '500MB' : '10MB'} allowed`);
+        errors.push(`File size too large. Maximum 10MB allowed for free service`);
+      }
+      
+      // Validate file type
+      if (adData.mediaType === 'image' && !adData.mediaFile.type.startsWith('image/')) {
+        errors.push('Invalid image file type');
+      } else if (adData.mediaType === 'video' && !adData.mediaFile.type.startsWith('video/')) {
+        errors.push('Invalid video file type');
       }
     }
 
