@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Target, Zap, BarChart3, Lightbulb, ArrowRight, CheckCircle, AlertCircle, User, Clock, Star, TrendingUp, Award, Upload, Image, Video, FileVideo, FileImage } from 'lucide-react';
 import { DisplayAd } from '@/components/AdSenseComponents';
-import { AdEvaluationEngine } from '@/lib/ad-algorithms';
+import  AdEvaluationEngine  from '@/lib/ad-algorithms';
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase client setup
