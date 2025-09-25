@@ -318,4 +318,360 @@ export class EvaluationService {
       } else if (duration > 15 && duration <= 60) {
         score += 20;
         recommendations.push('Good TikTok video length - shorter videos (9-15s) often perform better');
-      } else
+      } else if (duration > 60) {
+        recommendations.push('TikTok videos over 60 seconds have lower completion rates - consider shorter format');
+        score -= 15;
+      } else {
+        recommendations.push('TikTok videos should be at least 9 seconds for optimal algorithm performance');
+        score -= 10;
+      }
+
+      if (resolution.includes('1080x1920') || resolution.includes('9:16')) {
+        score += 20;
+        recommendations.push('Perfect TikTok vertical format - optimized for mobile viewing');
+      } else {
+        recommendations.push('Use vertical 9:16 aspect ratio (1080x1920) for TikTok optimization');
+        score -= 15;
+      }
+    } else {
+      recommendations.push('TikTok is primarily a video platform - image ads have limited effectiveness');
+      score -= 20;
+    }
+
+    return score;
+  }
+
+  private static analyzeFacebookMedia(adData: AdData, recommendations: string[]): number {
+    let score = 0;
+    const resolution = adData.mediaResolution || '';
+    const duration = adData.mediaDuration || 0;
+
+    if (adData.mediaType === 'video') {
+      if (duration >= 15 && duration <= 240) {
+        score += 20;
+        recommendations.push('Excellent Facebook video duration - ideal for audience retention');
+      } else if (duration < 15) {
+        recommendations.push('Facebook videos perform better when at least 15 seconds long');
+        score -= 8;
+      } else {
+        recommendations.push('Facebook videos over 4 minutes may lose audience attention - consider shorter format');
+        score -= 12;
+      }
+
+      if (resolution.includes('1920x1080') || resolution.includes('16:9')) {
+        score += 15;
+        recommendations.push('Perfect Facebook video format - optimized for desktop and mobile');
+      } else if (resolution.includes('1080x1080')) {
+        score += 10;
+        recommendations.push('Good square format for Facebook - works well across devices');
+      }
+    } else if (adData.mediaType === 'image') {
+      if (resolution.includes('1200x630') || resolution.includes('1.91:1')) {
+        score += 20;
+        recommendations.push('Ideal Facebook image dimensions - perfect for link posts and ads');
+      } else if (resolution.includes('1080x1080')) {
+        score += 15;
+        recommendations.push('Great square format for Facebook - excellent engagement potential');
+      } else {
+        recommendations.push('Use 1200x630 (landscape) or 1080x1080 (square) for optimal Facebook display');
+        score -= 10;
+      }
+    }
+
+    return score;
+  }
+
+  private static analyzeYouTubeMedia(adData: AdData, recommendations: string[]): number {
+    let score = 0;
+    const resolution = adData.mediaResolution || '';
+    const duration = adData.mediaDuration || 0;
+
+    if (adData.mediaType === 'video') {
+      if (duration >= 30 && duration <= 300) {
+        score += 25;
+        recommendations.push('Excellent YouTube ad duration - optimal for pre-roll and mid-roll placement');
+      } else if (duration >= 15 && duration < 30) {
+        score += 15;
+        recommendations.push('Good for YouTube bumper ads - consider longer format for more comprehensive messaging');
+      } else if (duration > 300) {
+        recommendations.push('Long YouTube ads may experience high skip rates - consider shorter versions');
+        score -= 10;
+      } else {
+        recommendations.push('YouTube ads should be at least 15 seconds for effective messaging');
+        score -= 15;
+      }
+
+      if (resolution.includes('1920x1080') || resolution.includes('16:9')) {
+        score += 20;
+        recommendations.push('Perfect YouTube format - HD quality optimized for platform standards');
+      } else if (resolution.includes('1280x720')) {
+        score += 10;
+        recommendations.push('Good HD quality - consider 1920x1080 for premium appearance');
+      } else {
+        recommendations.push('Use 1920x1080 (16:9) resolution for optimal YouTube display quality');
+        score -= 15;
+      }
+    } else {
+      recommendations.push('YouTube is a video platform - consider creating video content for better performance');
+      score -= 25;
+    }
+
+    return score;
+  }
+
+  private static analyzeLinkedInMedia(adData: AdData, recommendations: string[]): number {
+    let score = 0;
+    const resolution = adData.mediaResolution || '';
+    const duration = adData.mediaDuration || 0;
+
+    if (adData.mediaType === 'video') {
+      if (duration >= 30 && duration <= 180) {
+        score += 20;
+        recommendations.push('Ideal LinkedIn video length - perfect for professional engagement');
+      } else if (duration > 180) {
+        recommendations.push('LinkedIn videos over 3 minutes may lose professional audience attention');
+        score -= 10;
+      } else {
+        recommendations.push('LinkedIn videos should be at least 30 seconds for meaningful professional messaging');
+        score -= 8;
+      }
+
+      if (resolution.includes('1920x1080') || resolution.includes('1080x1920')) {
+        score += 15;
+        recommendations.push('Excellent LinkedIn video quality - professional standard resolution');
+      }
+    } else if (adData.mediaType === 'image') {
+      if (resolution.includes('1200x627') || resolution.includes('1.91:1')) {
+        score += 20;
+        recommendations.push('Perfect LinkedIn image format - optimized for professional feed display');
+      } else if (resolution.includes('1080x1080')) {
+        score += 15;
+        recommendations.push('Good square format for LinkedIn - works well for carousel posts');
+      } else {
+        recommendations.push('Use 1200x627 for LinkedIn single image posts or 1080x1080 for carousel content');
+        score -= 8;
+      }
+    }
+
+    return score;
+  }
+
+  private static analyzeTwitterMedia(adData: AdData, recommendations: string[]): number {
+    let score = 0;
+    const resolution = adData.mediaResolution || '';
+    const duration = adData.mediaDuration || 0;
+
+    if (adData.mediaType === 'video') {
+      if (duration >= 6 && duration <= 140) {
+        score += 20;
+        recommendations.push('Great Twitter video length - optimized for timeline engagement');
+      } else if (duration > 140) {
+        recommendations.push('Twitter videos over 140 seconds may not autoplay - consider shorter format');
+        score -= 12;
+      } else {
+        recommendations.push('Twitter videos should be at least 6 seconds for effective messaging');
+        score -= 10;
+      }
+
+      if (resolution.includes('1280x720') || resolution.includes('1920x1080')) {
+        score += 15;
+        recommendations.push('Excellent Twitter video quality - HD format for professional appearance');
+      }
+    } else if (adData.mediaType === 'image') {
+      if (resolution.includes('1200x675') || resolution.includes('16:9')) {
+        score += 20;
+        recommendations.push('Perfect Twitter image format - optimized for timeline display');
+      } else if (resolution.includes('1080x1080')) {
+        score += 10;
+        recommendations.push('Good square format for Twitter - consider 16:9 for better timeline presence');
+      } else {
+        recommendations.push('Use 1200x675 (16:9) for optimal Twitter image display');
+        score -= 8;
+      }
+    }
+
+    return score;
+  }
+
+  private static analyzeGenericMedia(adData: AdData, recommendations: string[]): number {
+    let score = 0;
+    const resolution = adData.mediaResolution || '';
+    const duration = adData.mediaDuration || 0;
+
+    if (adData.mediaType === 'video') {
+      if (duration >= 15 && duration <= 120) {
+        score += 15;
+        recommendations.push('Good video duration for most platforms - versatile length for various uses');
+      } else if (duration > 120) {
+        recommendations.push('Consider shorter video format for better cross-platform compatibility');
+        score -= 8;
+      } else {
+        recommendations.push('Video should be at least 15 seconds for effective messaging');
+        score -= 10;
+      }
+
+      if (resolution.includes('1920x1080') || resolution.includes('1080x1080')) {
+        score += 10;
+        recommendations.push('Good video quality - suitable for most digital platforms');
+      }
+    } else if (adData.mediaType === 'image') {
+      if (resolution.includes('1080') || resolution.includes('1200')) {
+        score += 15;
+        recommendations.push('Good image resolution - suitable for most digital advertising platforms');
+      } else {
+        recommendations.push('Consider higher resolution images (1080p+) for better display quality');
+        score -= 5;
+      }
+    }
+
+    return score;
+  }
+
+  /**
+   * Get evaluation history for a user or IP
+   */
+  static async getEvaluationHistory(ipAddress: string, userEmail?: string, limit: number = 10) {
+    try {
+      if (userEmail) {
+        return await DatabaseService.getUserEvaluations(userEmail, limit);
+      } else {
+        return await DatabaseService.getEvaluationsByIP(ipAddress, limit);
+      }
+    } catch (error) {
+      console.error('Error fetching evaluation history:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get platform performance insights
+   */
+  static async getPlatformInsights(platform: string) {
+    try {
+      return await DatabaseService.getPlatformStats(platform);
+    } catch (error) {
+      console.error('Error fetching platform insights:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get industry performance insights
+   */
+  static async getIndustryInsights(industry: string) {
+    try {
+      return await DatabaseService.getIndustryStats(industry);
+    } catch (error) {
+      console.error('Error fetching industry insights:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Validate ad data before evaluation
+   */
+  static validateAdData(adData: AdData): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!adData.title?.trim()) {
+      errors.push('Ad title is required');
+    }
+
+    if (!adData.description?.trim()) {
+      errors.push('Ad description is required');
+    }
+
+    if (!adData.platform) {
+      errors.push('Target platform is required');
+    }
+
+    if (!adData.industry) {
+      errors.push('Industry is required');
+    }
+
+    if (!adData.goals) {
+      errors.push('Campaign goals are required');
+    }
+
+    if (!adData.audience?.trim()) {
+      errors.push('Target audience description is required');
+    }
+
+    if (!adData.country) {
+      errors.push('Target country is required');
+    }
+
+    if (!adData.adType) {
+      errors.push('Ad type is required');
+    }
+
+    if (!adData.targetAge) {
+      errors.push('Target age range is required');
+    }
+
+    // Media file validation
+    if ((adData.adType === 'video' || adData.adType === 'image') && !adData.mediaFile) {
+      errors.push(`${adData.adType === 'video' ? 'Video' : 'Image'} file is required for this ad type`);
+    }
+
+    if (adData.mediaFile) {
+      const maxSize = adData.mediaType === 'video' ? 500 * 1024 * 1024 : 10 * 1024 * 1024; // 500MB for video, 10MB for image
+      if (adData.mediaFile.size > maxSize) {
+        errors.push(`File size too large. Maximum ${adData.mediaType === 'video' ? '500MB' : '10MB'} allowed`);
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Get comprehensive evaluation with additional insights
+   */
+  static async getComprehensiveEvaluation(
+    adData: AdData,
+    ipAddress: string,
+    userEmail?: string,
+    userName?: string
+  ) {
+    try {
+      // Validate data first
+      const validation = this.validateAdData(adData);
+      if (!validation.isValid) {
+        return {
+          success: false,
+          error: validation.errors.join(', ')
+        };
+      }
+
+      // Get the main evaluation
+      const evaluation = await this.evaluateAd(adData, ipAddress, userEmail, userName);
+      
+      if (!evaluation.success) {
+        return evaluation;
+      }
+
+      // Get additional insights
+      const [platformInsights, industryInsights] = await Promise.all([
+        this.getPlatformInsights(adData.platform),
+        this.getIndustryInsights(adData.industry)
+      ]);
+
+      return {
+        ...evaluation,
+        platformInsights,
+        industryInsights
+      };
+    } catch (error) {
+      console.error('Error in comprehensive evaluation:', error);
+      return {
+        success: false,
+        error: 'Failed to complete comprehensive evaluation'
+      };
+    }
+  }
+}
+
+export default EvaluationService;
