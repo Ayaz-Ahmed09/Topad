@@ -1,10 +1,5 @@
 // lib/database-helpers.ts
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from './supabase';
 
 export interface AdData {
   title: string;
@@ -165,13 +160,16 @@ export class DatabaseService {
   }
 
   // User Management Functions
-  static async createUser(email: string, name: string) {
+  static async createUser(email: string, name: string, passwordHash?: string) {
     try {
       const { data, error } = await supabase
         .from('users')
         .insert({
           email: email.toLowerCase(),
           name: name.trim(),
+          password_hash: passwordHash,
+          is_premium: false,
+          total_evaluations: 0,
           created_at: new Date().toISOString()
         })
         .select()
@@ -209,12 +207,12 @@ export class DatabaseService {
     }
   }
 
-  static async getOrCreateUser(email: string, name: string) {
+  static async getOrCreateUser(email: string, name: string, passwordHash?: string) {
     try {
       let user = await this.getUser(email);
       
       if (!user) {
-        user = await this.createUser(email, name);
+        user = await this.createUser(email, name, passwordHash);
       }
 
       return user;
@@ -227,38 +225,27 @@ export class DatabaseService {
   // User Statistics Functions
   static async getUserStats(email: string): Promise<UserStats | null> {
     try {
-      const { data, error } = await supabase
-        .from('user_stats')
+      const { data: evaluations, error } = await supabase
+        .from('user_evaluations')
         .select('*')
         .eq('email', email.toLowerCase())
-        .single();
+        .order('created_at', { ascending: false });
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching user stats:', error);
         return null;
       }
 
-      if (!data) {
-        return {
-          totalEvaluations: 0,
-          remainingFreeUses: 50,
-          todayEvaluationCount: 0
-        };
-      }
+      const today = new Date().toDateString();
+      const todayEvaluations = evaluations?.filter(eval => 
+        new Date(eval.created_at).toDateString() === today
+      ) || [];
 
       return {
-        totalEvaluations: data.evaluation_count || 0,
-        remainingFreeUses: Math.max(0, 50 - (data.today_evaluation_count || 0)),
-        averageScores: {
-          creativity: 0, // Simplified - just show overall average
-          viability: 0,
-          alignment: 0,
-          engagement: 0,
-          conversion: 0,
-          overall: data.avg_overall_score || 0
-        },
-        lastEvaluationDate: data.last_evaluation_date,
-        todayEvaluationCount: data.today_evaluation_count || 0
+        totalEvaluations: evaluations?.length || 0,
+        remainingFreeUses: Math.max(0, 50 - todayEvaluations.length),
+        lastEvaluationDate: evaluations?.[0]?.created_at,
+        todayEvaluationCount: todayEvaluations.length
       };
     } catch (error) {
       console.error('Error in getUserStats:', error);
@@ -356,127 +343,54 @@ export class DatabaseService {
     }
   }
 
-  // Analytics and Reporting Functions
-  static async getEvaluationsByIP(ipAddress: string, limit: number = 10) {
+  // Check if user can evaluate (for rate limiting)
+  static async canUserEvaluate(ipAddress: string, userEmail?: string): Promise<{canEvaluate: boolean, remainingUses: number, message?: string}> {
     try {
-      const { data, error } = await supabase
-        .from('evaluations')
-        .select('*')
-        .eq('ip_address', ipAddress)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching evaluations by IP:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in getEvaluationsByIP:', error);
-      return [];
-    }
-  }
-
-  static async getUserEvaluations(email: string, limit: number = 20) {
-    try {
-      const { data, error } = await supabase
-        .from('user_evaluations')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching user evaluations:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in getUserEvaluations:', error);
-      return [];
-    }
-  }
-
-  // Platform and Industry Analytics
-  static async getPlatformStats(platform: string) {
-    try {
-      const { data, error } = await supabase
-        .from('platform_stats')
-        .select('*')
-        .eq('platform', platform)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching platform stats:', error);
-        return null;
-      }
-
-      if (!data) return null;
-
-      return {
-        platform: data.platform,
-        totalEvaluations: data.total_evaluations,
-        averageScore: data.avg_score,
-        mediaEvaluations: data.media_evaluations,
-        recentActivity: {
-          last7Days: data.evaluations_last_7_days,
-          last30Days: data.evaluations_last_30_days
+      if (userEmail) {
+        // Registered users have higher limits (50 per day)
+        const stats = await this.getUserStats(userEmail);
+        const remainingUses = stats?.remainingFreeUses || 0;
+        
+        return {
+          canEvaluate: remainingUses > 0,
+          remainingUses,
+          message: remainingUses === 0 ? 'Daily limit of 50 evaluations reached. Try again tomorrow.' : undefined
+        };
+      } else {
+        // Anonymous users limited to 3 per day
+        const usage = await this.getIPUsage(ipAddress);
+        
+        if (!usage) {
+          // Create new IP tracker
+          await this.createIPTracker(ipAddress);
+          return {
+            canEvaluate: true,
+            remainingUses: 3,
+            message: undefined
+          };
         }
-      };
-    } catch (error) {
-      console.error('Error in getPlatformStats:', error);
-      return null;
-    }
-  }
 
-  static async getIndustryStats(industry: string) {
-    try {
-      const { data, error } = await supabase
-        .from('industry_stats')
-        .select('*')
-        .eq('industry', industry)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching industry stats:', error);
-        return null;
+        // Check if it's a new day
+        const today = new Date().toDateString();
+        const lastUsedDate = new Date(usage.lastUsed).toDateString();
+        const isNewDay = today !== lastUsedDate;
+        
+        const usedToday = isNewDay ? 0 : usage.count;
+        const remainingUses = Math.max(0, 3 - usedToday);
+        
+        return {
+          canEvaluate: remainingUses > 0,
+          remainingUses,
+          message: remainingUses === 0 ? 'You have reached the free limit of 3 evaluations. Please sign up to get 50 daily evaluations.' : undefined
+        };
       }
-
-      if (!data) return null;
-
+    } catch (error) {
+      console.error('Error in canUserEvaluate:', error);
       return {
-        industry: data.industry,
-        totalEvaluations: data.total_evaluations,
-        averageScore: data.avg_score,
-        mediaEvaluations: data.media_evaluations,
-        recentActivity: {
-          last7Days: data.evaluations_last_7_days,
-          last30Days: data.evaluations_last_30_days
-        }
+        canEvaluate: false,
+        remainingUses: 0,
+        message: 'Unable to check usage limits. Please try again.'
       };
-    } catch (error) {
-      console.error('Error in getIndustryStats:', error);
-      return null;
-    }
-  }
-
-  // Cleanup Functions
-  static async cleanupOldData() {
-    try {
-      // This should be called by a cron job or scheduled function
-      const { error } = await supabase.rpc('cleanup_old_ip_data');
-
-      if (error) {
-        console.error('Error cleaning up old data:', error);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error in cleanupOldData:', error);
-      return false;
     }
   }
 
@@ -489,41 +403,6 @@ export class DatabaseService {
     } catch (error) {
       console.error('Error getting user IP:', error);
       return 'unknown';
-    }
-  }
-
-  // Check if user can evaluate (for rate limiting)
-  static async canUserEvaluate(ipAddress: string, userEmail?: string): Promise<{canEvaluate: boolean, remainingUses: number, message?: string}> {
-    try {
-      if (userEmail) {
-        // Registered users have higher limits
-        const stats = await this.getUserStats(userEmail);
-        const remainingUses = stats?.remainingFreeUses || 0;
-        
-        return {
-          canEvaluate: remainingUses > 0,
-          remainingUses,
-          message: remainingUses === 0 ? 'Daily limit reached. You can evaluate again tomorrow.' : undefined
-        };
-      } else {
-        // Anonymous users limited to 3 per day
-        const usage = await this.getIPUsage(ipAddress);
-        const usedToday = usage?.count || 0;
-        const remainingUses = Math.max(0, 3 - usedToday);
-        
-        return {
-          canEvaluate: remainingUses > 0,
-          remainingUses,
-          message: remainingUses === 0 ? 'You have reached the free limit of 3 evaluations. Please sign up to continue.' : undefined
-        };
-      }
-    } catch (error) {
-      console.error('Error in canUserEvaluate:', error);
-      return {
-        canEvaluate: false,
-        remainingUses: 0,
-        message: 'Unable to check usage limits. Please try again.'
-      };
     }
   }
 }

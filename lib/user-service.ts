@@ -1,58 +1,45 @@
-// lib/user-service.ts - User management with localStorage (no Supabase dependency)
+// lib/user-service.ts - User management with Supabase
+import { supabase } from './supabase';
+import DatabaseService from './database-helpers';
 
-interface User {
+export const PRICING_PLANS = {
+  free: { name: 'Free', evaluations: 50, price: 0, description: '50 evaluations per day' },
+  premium: { name: 'Premium', evaluations: 999, price: 0, description: 'Unlimited evaluations' }
+};
+
+export interface User {
   id: string;
   email: string;
   name: string;
-  toolUses: number;
-  createdAt: string;
-  lastUsed: string;
+  is_premium: boolean;
+  total_evaluations: number;
+  last_evaluation: string | null;
+  created_at: string;
 }
-
-interface AdEvaluation {
-  id: string;
-  userId: string;
-  adData: any;
-  evaluationResult: any;
-  createdAt: string;
-}
-
-export const PRICING_PLANS = {
-  free: { name: 'Free', evaluations: 5, price: 0 },
-  basic: { name: 'Basic', evaluations: 20, price: 25 },
-  pro: { name: 'Professional', evaluations: 100, price: 75 },
-  enterprise: { name: 'Enterprise', evaluations: 500, price: 200 }
-};
 
 export class UserService {
   
-  // Create or get user (localStorage based)
-  static async getOrCreateUser(email: string, name: string): Promise<User> {
-    const users = this.getAllUsers();
-    const existingUser = users.find(u => u.email === email);
-    
-    if (existingUser) {
-      return existingUser;
+  // Create or get user
+  static async getOrCreateUser(email: string, name: string, passwordHash?: string): Promise<User | null> {
+    try {
+      // First check if user already exists
+      const existingUser = await DatabaseService.getUser(email);
+      
+      if (existingUser) {
+        return existingUser;
+      }
+      
+      // Create new user
+      const newUser = await DatabaseService.createUser(email, name, passwordHash);
+      return newUser;
+    } catch (error) {
+      console.error('Error in getOrCreateUser:', error);
+      return null;
     }
-    
-    // Create new user
-    const newUser: User = {
-      id: this.generateId(),
-      email,
-      name,
-      toolUses: 0,
-      createdAt: new Date().toISOString(),
-      lastUsed: new Date().toISOString()
-    };
-    
-    users.push(newUser);
-    localStorage.setItem('adTool_users', JSON.stringify(users));
-    
-    return newUser;
   }
   
-  // Check if user can use the tool (daily limit reset)
-  static async canUseEvaluationTool(userId: string, isOwner: boolean = false): Promise<{
+  // Check if user can use the tool
+  static async canUseEvaluationTool(email: string, isOwner: boolean = false): Promise<{
     canUse: boolean;
     remainingUses: number;
     planType: string;
@@ -67,142 +54,84 @@ export class UserService {
       };
     }
     
-    const users = this.getAllUsers();
-    const user = users.find(u => u.id === userId);
-    
-    if (!user) {
-      throw new Error('User not found');
+    try {
+      const stats = await DatabaseService.getUserStats(email);
+      const remainingUses = stats?.remainingFreeUses || 0;
+      
+      return {
+        canUse: remainingUses > 0,
+        remainingUses,
+        planType: 'free',
+        message: remainingUses > 0 
+          ? `${remainingUses} evaluations remaining today`
+          : 'Daily limit of 50 evaluations reached. Try again tomorrow.'
+      };
+    } catch (error) {
+      console.error('Error checking tool usage:', error);
+      return {
+        canUse: false,
+        remainingUses: 0,
+        planType: 'free',
+        message: 'Unable to check usage limits. Please try again.'
+      };
     }
-    
-    // Check if it's a new day (reset daily limit)
-    const today = new Date().toDateString();
-    const lastUsedDate = new Date(user.lastUsed).toDateString();
-    
-    let currentUses = user.toolUses;
-    if (today !== lastUsedDate) {
-      // Reset daily usage
-      currentUses = 0;
-      user.toolUses = 0;
-      user.lastUsed = new Date().toISOString();
-      this.updateUser(user);
-    }
-    
-    const dailyLimit = 5; // 5 evaluations per day for free users
-    const remainingUses = Math.max(0, dailyLimit - currentUses);
-    
-    return {
-      canUse: remainingUses > 0,
-      remainingUses,
-      planType: 'free',
-      message: remainingUses > 0 
-        ? `${remainingUses} evaluations remaining today`
-        : 'Daily limit reached. Try again tomorrow or contact us for premium access.'
-    };
   }
   
   // Record tool usage
-  static async recordEvaluationUsage(userId: string, adData: any, evaluationResult: any): Promise<AdEvaluation> {
-    // Update user's tool usage count
-    const users = this.getAllUsers();
-    const userIndex = users.findIndex(u => u.id === userId);
-    
-    if (userIndex === -1) {
-      throw new Error('User not found');
+  static async recordEvaluationUsage(email: string, adData: any, evaluationResult: any) {
+    try {
+      return await DatabaseService.saveUserEvaluation(email, adData, evaluationResult);
+    } catch (error) {
+      console.error('Error recording evaluation usage:', error);
+      return null;
     }
-    
-    users[userIndex].toolUses += 1;
-    users[userIndex].lastUsed = new Date().toISOString();
-    localStorage.setItem('adTool_users', JSON.stringify(users));
-    
-    // Save the evaluation
-    const evaluation: AdEvaluation = {
-      id: this.generateId(),
-      userId,
-      adData,
-      evaluationResult,
-      createdAt: new Date().toISOString()
-    };
-    
-    const evaluations = this.getAllEvaluations();
-    evaluations.push(evaluation);
-    localStorage.setItem('adTool_evaluations', JSON.stringify(evaluations));
-    
-    return evaluation;
   }
   
   // Get user's evaluation history
-  static async getUserEvaluations(userId: string, limit: number = 10): Promise<AdEvaluation[]> {
-    const evaluations = this.getAllEvaluations();
-    return evaluations
-      .filter(e => e.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
+  static async getUserEvaluations(email: string, limit: number = 10) {
+    try {
+      const { data, error } = await supabase
+        .from('user_evaluations')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('Error fetching user evaluations:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getUserEvaluations:', error);
+      return [];
+    }
   }
   
   // Get user statistics
-  static async getUserStats(userId: string) {
-    const users = this.getAllUsers();
-    const user = users.find(u => u.id === userId);
-    
-    if (!user) {
-      throw new Error('User not found');
-    }
-    
-    const evaluations = await this.getUserEvaluations(userId, 100);
-    
-    // Calculate average scores from evaluations
-    const avgScores = evaluations.reduce((acc, evaluation) => {
-      const scores = eval.evaluationResult?.scores || {};
-      acc.creativity += scores.creativity || 0;
-      acc.viability += scores.viability || 0;
-      acc.alignment += scores.alignment || 0;
-      acc.count++;
-      return acc;
-    }, { creativity: 0, viability: 0, alignment: 0, count: 0 });
-    
-    const count = avgScores.count || 1;
-    
-    // Check daily remaining uses
-    const today = new Date().toDateString();
-    const lastUsedDate = new Date(user.lastUsed).toDateString();
-    const dailyUses = today === lastUsedDate ? user.toolUses : 0;
-    
-    return {
-      totalEvaluations: evaluations.length,
-      memberSince: user.createdAt,
-      averageScores: {
-        creativity: Math.round(avgScores.creativity / count),
-        viability: Math.round(avgScores.viability / count),
-        alignment: Math.round(avgScores.alignment / count)
-      },
-      remainingFreeUses: Math.max(0, 5 - dailyUses),
-      dailyUses
-    };
-  }
-  
-  // Helper methods
-  private static getAllUsers(): User[] {
-    if (typeof window === 'undefined') return [];
-    const users = localStorage.getItem('adTool_users');
-    return users ? JSON.parse(users) : [];
-  }
-  
-  private static getAllEvaluations(): AdEvaluation[] {
-    if (typeof window === 'undefined') return [];
-    const evaluations = localStorage.getItem('adTool_evaluations');
-    return evaluations ? JSON.parse(evaluations) : [];
-  }
-  
-  private static updateUser(user: User): void {
-    const users = this.getAllUsers();
-    const index = users.findIndex(u => u.id === user.id);
-    if (index !== -1) {
-      users[index] = user;
-      localStorage.setItem('adTool_users', JSON.stringify(users));
+  static async getUserStats(email: string) {
+    try {
+      return await DatabaseService.getUserStats(email);
+    } catch (error) {
+      console.error('Error getting user stats:', error);
+      return null;
     }
   }
-  
-  private static generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+
+  // Simple password hashing (for demo - use proper hashing in production)
+  static async hashPassword(password: string): Promise<string> {
+    // Simple hash for demo - use bcrypt or similar in production
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Verify password
+  static async verifyPassword(password: string, hash: string): Promise<boolean> {
+    const hashedInput = await this.hashPassword(password);
+    return hashedInput === hash;
   }
 }
