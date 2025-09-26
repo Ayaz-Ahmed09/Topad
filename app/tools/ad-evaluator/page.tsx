@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Target, Zap, BarChart3, Lightbulb, ArrowRight, CheckCircle, AlertCircle, User, Clock, Star, TrendingUp, Award, Upload, Image, Video, FileVideo, FileImage, LogIn, UserPlus, Menu, X, Eye, Shield, Cpu, Database } from 'lucide-react';
+import { useState, useRef } from 'react';
+import {
+  Target, Zap, BarChart3, Lightbulb, ArrowRight, CheckCircle, AlertCircle,
+  Clock, Star, TrendingUp, Award, Upload, Image, Video, FileVideo, FileImage,
+  Menu, X, Eye, Shield, Cpu, Database
+} from 'lucide-react';
 import { DisplayAd } from '@/components/AdSenseComponents';
 import EvaluationService from '@/lib/evaluation-service';
-import DatabaseService from '@/lib/database-helpers';
-import { UserService } from '@/lib/user-service';
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -51,21 +53,6 @@ interface EvaluationResult {
   timestamp: string;
 }
 
-interface UserInfo {
-  id: string;
-  email: string;
-  name: string;
-  remainingUses: number;
-  totalUses: number;
-  isPremium: boolean;
-}
-
-interface UsageTracker {
-  ip: string;
-  count: number;
-  lastUsed: string;
-}
-
 export default function AdEvaluatorPage() {
   const [adData, setAdData] = useState<AdData>({
     title: '',
@@ -81,141 +68,68 @@ export default function AdEvaluatorPage() {
     targetGender: '',
     language: 'en'
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [showLoginForm, setShowLoginForm] = useState(false);
-  const [showSignupForm, setShowSignupForm] = useState(false);
-  const [userStats, setUserStats] = useState<any>(null);
-  const [usageTracker, setUsageTracker] = useState<UsageTracker | null>(null);
-  const [userIP, setUserIP] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Login/Signup form state
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
-  });
-
-  const [signupData, setSignupData] = useState({
-    email: '',
-    name: '',
-    password: ''
-  });
-
-  useEffect(() => {
-    // Get user IP and check usage
-    initializeUser();
-    
-    // Check if user is logged in
-    const savedUser = localStorage.getItem('adToolUser');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setUserInfo(user);
-        loadUserStatsFromDatabase(user.email);
-      } catch (error) {
-        localStorage.removeItem('adToolUser');
-      }
-    }
-  }, []);
-
-  const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
-
-  const initializeUser = async () => {
-    try {
-      // Get user IP
-      const ip = await DatabaseService.getUserIP();
-      setUserIP(ip);
-
-      // Check/create IP usage record
-      let usage = await DatabaseService.getIPUsage(ip);
-      
-      if (!usage) {
-        usage = await DatabaseService.createIPTracker(ip);
-      }
-      
-      if (usage) {
-        // Check if it's a new day and reset count
-        const today = new Date().toDateString();
-        const lastUsedDate = new Date(usage.lastUsed).toDateString();
-        
-        if (today !== lastUsedDate) {
-          // Reset daily count
-          usage = await DatabaseService.updateIPUsage(ip);
-        }
-        
-        setUsageTracker(usage);
-      }
-    } catch (error) {
-      console.error('Failed to initialize user:', error);
-      // Set default values if initialization fails
-      setUsageTracker({ ip: 'unknown', count: 0, lastUsed: new Date().toISOString() });
-    }
-  };
-
-  const loadUserStatsFromDatabase = async (email: string) => {
-    try {
-      const stats = await DatabaseService.getUserStats(email);
-      setUserStats(stats);
-    } catch (error) {
-      console.error('Failed to load user stats:', error);
-    }
-  };
-
+  // Handle basic input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setAdData(prev => ({ ...prev, [name]: value }));
+    setError(null);
   };
 
-  // Auto-cleanup function for temporary files
-  const cleanupTempFile = (url: string) => {
+  // Cleanup temporary object URLs
+  const cleanupTempFile = (url?: string) => {
+    if (!url) return;
     setTimeout(() => {
       try {
         URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error('Error cleaning up temp file:', error);
+      } catch (err) {
+        console.error('Error cleaning up temp file:', err);
       }
     }, 100);
   };
 
+  // File upload handling (supports image/video; validation adapted so tool is free and flexible)
   const handleFileUpload = (file: File) => {
     if (!file) return;
 
-    // Validate file size (10MB limit)
+    // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
       setError('File size too large. Maximum 10MB allowed.');
       return;
     }
 
-    const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-    
-    // Validate file type matches ad type
-    if (adData.adType === 'image' && !file.type.startsWith('image/')) {
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    if (!isImage && !isVideo) {
+      setError('Please upload an image or video file.');
+      return;
+    }
+
+    // If user selected a specific adType, enforce reasonable type rules:
+    // - if adType === 'image' require image
+    // - if adType === 'video' require video
+    if (adData.adType === 'image' && !isImage) {
       setError('Please upload an image file for image ad type.');
       return;
     }
-    
-    if (adData.adType === 'video' && !file.type.startsWith('video/')) {
+    if (adData.adType === 'video' && !isVideo) {
       setError('Please upload a video file for video ad type.');
       return;
     }
 
-    setError(null); // Clear any previous errors
-    
-    // Create temporary URL for analysis (auto-cleanup after use)
+    setError(null);
+
+    const fileType = isImage ? 'image' : 'video';
     const tempUrl = URL.createObjectURL(file);
-    
+
     setAdData(prev => ({
       ...prev,
       mediaFile: file,
@@ -224,8 +138,8 @@ export default function AdEvaluatorPage() {
       mediaUrl: tempUrl
     }));
 
-    // For video files, try to get duration and resolution
-    if (fileType === 'video') {
+    // If video, load metadata
+    if (isVideo) {
       const video = document.createElement('video');
       video.preload = 'metadata';
       video.onloadedmetadata = () => {
@@ -238,7 +152,10 @@ export default function AdEvaluatorPage() {
       };
       video.onerror = () => cleanupTempFile(video.src);
       video.src = tempUrl;
-    } else if (fileType === 'image') {
+    }
+
+    // If image, load to get resolution
+    if (isImage) {
       const img = new Image();
       img.onload = () => {
         setAdData(prev => ({
@@ -255,15 +172,9 @@ export default function AdEvaluatorPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      const file = files[0];
-      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-        handleFileUpload(file);
-      } else {
-        setError('Please upload an image or video file');
-      }
+      handleFileUpload(files[0]);
     }
   };
 
@@ -274,160 +185,64 @@ export default function AdEvaluatorPage() {
     }
   };
 
-  const handleSignupSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  // Form validation: require core text fields and (for most ad types) a media file when applicable
+  // We'll require media file for any adType except 'search' (search ads typically don't have media).
+  const mediaRequired = adData.adType && adData.adType !== 'search';
+  const isFormValid = !!(adData.title.trim() &&
+    adData.description.trim() &&
+    adData.platform &&
+    adData.audience.trim() &&
+    adData.industry &&
+    adData.goals &&
+    adData.country &&
+    adData.adType &&
+    adData.targetAge &&
+    (!mediaRequired || adData.mediaFile)
+  );
 
-    try {
-      // Hash password
-      const passwordHash = await UserService.hashPassword(signupData.password);
-      
-      // Create user
-      const newUser = await UserService.getOrCreateUser(
-        signupData.email, 
-        signupData.name, 
-        passwordHash
-      );
-
-      if (!newUser) {
-        setError('Failed to create account. Email might already exist.');
-        return;
-      }
-
-      const user: UserInfo = {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        remainingUses: 50,
-        totalUses: 0,
-        isPremium: newUser.is_premium
-      };
-      
-      setUserInfo(user);
-      localStorage.setItem('adToolUser', JSON.stringify(user));
-      setShowSignupForm(false);
-      setSignupData({ email: '', name: '', password: '' });
-      await loadUserStatsFromDatabase(user.email);
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const existingUser = await DatabaseService.getUser(loginData.email);
-
-      if (!existingUser) {
-        setError('User not found. Please check your email or sign up.');
-        return;
-      }
-
-      // Verify password
-      const isValidPassword = await UserService.verifyPassword(
-        loginData.password, 
-        existingUser.password_hash || ''
-      );
-
-      if (!isValidPassword) {
-        setError('Invalid password. Please try again.');
-        return;
-      }
-
-      const user: UserInfo = {
-        id: existingUser.id,
-        email: existingUser.email,
-        name: existingUser.name,
-        remainingUses: existingUser.is_premium ? 999 : 50,
-        totalUses: existingUser.total_evaluations || 0,
-        isPremium: existingUser.is_premium || false
-      };
-      
-      setUserInfo(user);
-      localStorage.setItem('adToolUser', JSON.stringify(user));
-      setShowLoginForm(false);
-      setLoginData({ email: '', password: '' });
-      await loadUserStatsFromDatabase(user.email);
-    } catch (err: any) {
-      setError(err.message || 'Failed to login. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    setUserInfo(null);
-    setUserStats(null);
-    localStorage.removeItem('adToolUser');
-  };
-
+  // Submit handler: tool is fully free — remove user/IP checks and allow evaluation directly
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Check usage limits
-    const canEvaluate = await DatabaseService.canUserEvaluate(userIP, userInfo?.email);
-    
-    if (!canEvaluate.canEvaluate) {
-      if (!userInfo) {
-        setShowSignupForm(true);
-      }
-      setError(canEvaluate.message || 'Usage limit reached');
+
+    setError(null);
+
+    if (!isFormValid) {
+      setError('Please complete all required fields. Attach a media file if the selected ad type requires one.');
       return;
     }
 
     setIsLoading(true);
-    setError(null);
+    setResult(null);
 
     try {
-      // Use the EvaluationService for complete evaluation
-      const evaluationResponse = await EvaluationService.getComprehensiveEvaluation(
-        adData,
-        userIP,
-        userInfo?.email,
-        userInfo?.name
-      );
+      // Keep EvaluationService usage as-is, but do not pass user/IP data.
+      // Use the same method the app previously used — pass only adData.
+      const evaluationResponse = await EvaluationService.getComprehensiveEvaluation(adData);
 
-      if (!evaluationResponse.success) {
-        if (evaluationResponse.rateLimited) {
-          setShowSignupForm(true);
-        }
-        setError(evaluationResponse.error || 'Evaluation failed');
+      if (!evaluationResponse) {
+        setError('Evaluation failed. Try again.');
         return;
       }
 
-      // Set the result
+      if (!evaluationResponse.success) {
+        setError(evaluationResponse.error || 'Evaluation failed.');
+        return;
+      }
+
       if (evaluationResponse.evaluation) {
         setResult(evaluationResponse.evaluation);
       }
 
-      // Update usage tracking
-      if (userInfo) {
-        await loadUserStatsFromDatabase(userInfo.email);
-      } else {
-        await DatabaseService.updateIPUsage(userIP);
-        const updatedUsage = await DatabaseService.getIPUsage(userIP);
-        setUsageTracker(updatedUsage);
-      }
-
-      // Cleanup media file URL after successful evaluation
+      // Cleanup temporary media URL (we already generated it locally)
       if (adData.mediaUrl) {
         cleanupTempFile(adData.mediaUrl);
+        // keep the file info cleared or keep it — we'll clear the url only to free memory
+        setAdData(prev => ({ ...prev, mediaUrl: undefined }));
       }
-      
     } catch (err) {
-      setError('Failed to evaluate ad. Please try again.');
       console.error('Evaluation error:', err);
-      
-      // Cleanup on error too
-      if (adData.mediaUrl) {
-        cleanupTempFile(adData.mediaUrl);
-      }
+      setError('Failed to evaluate ad. Please try again.');
+      if (adData.mediaUrl) cleanupTempFile(adData.mediaUrl);
     } finally {
       setIsLoading(false);
     }
@@ -445,82 +260,29 @@ export default function AdEvaluatorPage() {
     return 'Needs Improvement';
   };
 
-  // Check if form is valid for submission
-  const isFormValid = adData.title.trim() && 
-                     adData.description.trim() && 
-                     adData.platform && 
-                     adData.audience.trim() && 
-                     adData.industry && 
-                     adData.goals && 
-                     adData.country && 
-                     adData.adType && 
-                     adData.targetAge &&
-                     // Check media file requirement for image/video ads
-                     ((adData.adType === 'image' || adData.adType === 'video') ? adData.mediaFile : true);
-
-  const remainingFreeUses = userInfo ? 
-    (userInfo.isPremium ? 999 : Math.max(0, 50 - (userStats?.todayEvaluationCount || 0))) : 
-    Math.max(0, 3 - (usageTracker?.count || 0));
-  
-  const canEvaluate = remainingFreeUses > 0;
-
   return (
     <div className="min-h-screen bg-theme-gradient">
-      {/* Custom Header */}
+      {/* Header (simplified - no login/signup or user tracking) */}
       <header className="bg-black/80 backdrop-blur-sm border-b border-orange-500/30 sticky top-0 z-40">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <div className="flex items-center space-x-3">
               <div className="bg-gradient-to-br from-orange-500 to-red-600 p-2 rounded-xl">
                 <Target className="h-6 w-6 text-white" />
               </div>
               <div>
                 <span className="text-xl font-bold text-white">Ad Evaluator</span>
-                <div className="text-xs text-orange-400">Professional Analysis</div>
+                <div className="text-xs text-orange-400">Professional Analysis — Free to Use</div>
               </div>
             </div>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-4">
-              {userInfo ? (
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-white">{userInfo.name}</p>
-                    <p className="text-xs text-orange-400">{remainingFreeUses} evaluations left today</p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <div className="text-right text-sm">
-                    <p className="text-orange-400 font-medium">Free User</p>
-                    <p className="text-gray-400">{remainingFreeUses}/3 evaluations left</p>
-                  </div>
-                  <button
-                    onClick={() => setShowLoginForm(true)}
-                    className="flex items-center space-x-1 text-gray-300 hover:text-white transition-colors"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    <span>Login</span>
-                  </button>
-                  <button
-                    onClick={() => setShowSignupForm(true)}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center space-x-1"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    <span>Sign Up</span>
-                  </button>
-                </div>
-              )}
+              <div className="text-right">
+                <p className="text-sm font-medium text-white">Public Tool</p>
+                <p className="text-xs text-orange-400">Unlimited free evaluations</p>
+              </div>
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden text-gray-300 hover:text-white"
@@ -529,56 +291,18 @@ export default function AdEvaluatorPage() {
             </button>
           </div>
 
-          {/* Mobile Navigation */}
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-700">
-              {userInfo ? (
-                <div className="space-y-3">
-                  <div className="px-4">
-                    <p className="text-sm font-medium text-white">{userInfo.name}</p>
-                    <p className="text-xs text-orange-400">{remainingFreeUses} evaluations left today</p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="px-4 mb-3">
-                    <p className="text-sm text-orange-400 font-medium">Free User</p>
-                    <p className="text-xs text-gray-400">{remainingFreeUses}/3 evaluations left</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowLoginForm(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors flex items-center space-x-2"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    <span>Login</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowSignupForm(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-2 bg-orange-500 text-white rounded-lg transition-colors flex items-center space-x-2 mx-4"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    <span>Sign Up for 50 Daily Evaluations</span>
-                  </button>
-                </div>
-              )}
+              <div className="space-y-2 px-4">
+                <p className="text-sm text-orange-400 font-medium">Public Tool</p>
+                <p className="text-xs text-gray-400">Unlimited free evaluations</p>
+              </div>
             </div>
           )}
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -587,17 +311,16 @@ export default function AdEvaluatorPage() {
               <span className="text-white font-semibold">Advanced Algorithmic Analysis</span>
               <Star className="ml-2 text-orange-400" size={16} />
             </div>
-            
+
             <h1 className="text-4xl md:text-6xl font-display font-bold text-heading-readable mb-8">
               Professional <span className="text-warm">Ad Evaluator</span>
             </h1>
             <p className="text-xl md:text-2xl text-readable max-w-4xl mx-auto leading-relaxed mb-8">
-              Get comprehensive ad analysis using advanced algorithms that evaluate creativity, platform optimization, 
-              audience alignment, and conversion potential. Upload media files for complete evaluation including 
+              Get comprehensive ad analysis using advanced algorithms that evaluate creativity, platform optimization,
+              audience alignment, and conversion potential. Upload media files for complete evaluation including
               technical specifications and platform-specific recommendations.
             </p>
-            
-            {/* Key Features */}
+
             <div className="grid md:grid-cols-4 gap-6 max-w-4xl mx-auto">
               <div className="small-card text-center p-4">
                 <Cpu className="w-8 h-8 text-orange-400 mx-auto mb-2" />
@@ -617,7 +340,7 @@ export default function AdEvaluatorPage() {
               <div className="small-card text-center p-4">
                 <Shield className="w-8 h-8 text-orange-400 mx-auto mb-2" />
                 <div className="text-sm font-medium text-accent-readable">Privacy First</div>
-                <div className="text-xs text-readable">No Data Storage</div>
+                <div className="text-xs text-readable">No user tracking</div>
               </div>
             </div>
           </div>
@@ -626,184 +349,21 @@ export default function AdEvaluatorPage() {
 
       <DisplayAd />
 
-      {/* Signup Modal */}
-      {showSignupForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="schema-card rounded-2xl p-8 w-full max-w-md">
-            <div className="text-center mb-6">
-              <UserPlus className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-accent-readable mb-2">
-                Create Free Account
-              </h3>
-              <p className="text-readable">
-                Get 50 professional ad evaluations daily - completely free!
-              </p>
-            </div>
-            
-            <form onSubmit={handleSignupSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-accent-readable">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={signupData.email}
-                  onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-lg border border-orange-500/30 small-card text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="your@email.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-accent-readable">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={signupData.name}
-                  onChange={(e) => setSignupData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-lg border border-orange-500/30 small-card text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Your Name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-accent-readable">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={signupData.password}
-                  onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-lg border border-orange-500/30 small-card text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Create password"
-                />
-              </div>
-              <div className="flex space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowSignupForm(false)}
-                  className="flex-1 px-4 py-3 border border-gray-500 rounded-lg text-gray-300 hover:bg-gray-800/50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-3 rounded-lg hover:from-orange-600 hover:to-red-700 font-semibold disabled:opacity-50"
-                >
-                  {isLoading ? 'Creating...' : 'Create Account'}
-                </button>
-              </div>
-            </form>
-            <div className="text-center mt-4">
-              <button
-                onClick={() => {
-                  setShowSignupForm(false);
-                  setShowLoginForm(true);
-                }}
-                className="text-sm text-orange-400 hover:text-orange-300"
-              >
-                Already have an account? Login
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Login Modal */}
-      {showLoginForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="schema-card rounded-2xl p-8 w-full max-w-md">
-            <div className="text-center mb-6">
-              <LogIn className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-accent-readable mb-2">
-                Welcome Back
-              </h3>
-              <p className="text-readable">
-                Login to access your evaluation history
-              </p>
-            </div>
-            
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-accent-readable">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={loginData.email}
-                  onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-lg border border-orange-500/30 small-card text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="your@email.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-accent-readable">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={loginData.password}
-                  onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-lg border border-orange-500/30 small-card text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Your password"
-                />
-              </div>
-              <div className="flex space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowLoginForm(false)}
-                  className="flex-1 px-4 py-3 border border-gray-500 rounded-lg text-gray-300 hover:bg-gray-800/50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-3 rounded-lg hover:from-orange-600 hover:to-red-700 font-semibold disabled:opacity-50"
-                >
-                  {isLoading ? 'Logging in...' : 'Login'}
-                </button>
-              </div>
-            </form>
-            <div className="text-center mt-4">
-              <button
-                onClick={() => {
-                  setShowLoginForm(false);
-                  setShowSignupForm(true);
-                }}
-                className="text-sm text-orange-400 hover:text-orange-300"
-              >
-                Don't have an account? Sign up for free
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
+      {/* Main content */}
       <section className="py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-12">
-              {/* Evaluation Form */}
+              {/* Form */}
               <div>
                 <div className="schema-card rounded-2xl p-8">
-                  <h2 className="text-3xl font-bold text-accent-readable mb-6">
-                    Professional Ad Analysis
-                  </h2>
+                  <h2 className="text-3xl font-bold text-accent-readable mb-6">Professional Ad Analysis</h2>
                   <p className="text-readable mb-8">
-                    Our advanced algorithms analyze over 50 factors including platform optimization, 
-                    audience alignment, industry benchmarks, and conversion potential. Upload media 
-                    files for comprehensive technical analysis.
+                    Our advanced algorithms analyze over 50 factors including platform optimization, audience alignment,
+                    industry benchmarks, and conversion potential. Upload media files for comprehensive technical analysis.
                   </p>
-                  
+
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Basic Info */}
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="title" className="block text-sm font-medium text-accent-readable mb-2">
@@ -820,7 +380,7 @@ export default function AdEvaluatorPage() {
                           placeholder="Your compelling ad headline"
                         />
                       </div>
-                      
+
                       <div>
                         <label htmlFor="platform" className="block text-sm font-medium text-accent-readable mb-2">
                           Target Platform *
@@ -845,7 +405,7 @@ export default function AdEvaluatorPage() {
                         </select>
                       </div>
                     </div>
-                    
+
                     <div>
                       <label htmlFor="description" className="block text-sm font-medium text-accent-readable mb-2">
                         Ad Description/Copy *
@@ -861,8 +421,7 @@ export default function AdEvaluatorPage() {
                         placeholder="Your complete ad copy including call-to-action"
                       />
                     </div>
-                    
-                    {/* Advanced Targeting */}
+
                     <div className="grid md:grid-cols-3 gap-4">
                       <div>
                         <label htmlFor="country" className="block text-sm font-medium text-accent-readable mb-2">
@@ -886,7 +445,7 @@ export default function AdEvaluatorPage() {
                           <option value="other">Other</option>
                         </select>
                       </div>
-                      
+
                       <div>
                         <label htmlFor="targetAge" className="block text-sm font-medium text-accent-readable mb-2">
                           Target Age *
@@ -908,7 +467,7 @@ export default function AdEvaluatorPage() {
                           <option value="65+">65+</option>
                         </select>
                       </div>
-                      
+
                       <div>
                         <label htmlFor="targetGender" className="block text-sm font-medium text-accent-readable mb-2">
                           Target Gender
@@ -927,8 +486,7 @@ export default function AdEvaluatorPage() {
                         </select>
                       </div>
                     </div>
-                    
-                    {/* Industry & Campaign Info */}
+
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="industry" className="block text-sm font-medium text-accent-readable mb-2">
@@ -958,7 +516,7 @@ export default function AdEvaluatorPage() {
                           <option value="other">Other</option>
                         </select>
                       </div>
-                      
+
                       <div>
                         <label htmlFor="adType" className="block text-sm font-medium text-accent-readable mb-2">
                           Ad Type *
@@ -982,7 +540,7 @@ export default function AdEvaluatorPage() {
                         </select>
                       </div>
                     </div>
-                    
+
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="budget" className="block text-sm font-medium text-accent-readable mb-2">
@@ -1003,7 +561,7 @@ export default function AdEvaluatorPage() {
                           <option value="25000-plus">$25,000+</option>
                         </select>
                       </div>
-                      
+
                       <div>
                         <label htmlFor="goals" className="block text-sm font-medium text-accent-readable mb-2">
                           Campaign Goals *
@@ -1026,7 +584,7 @@ export default function AdEvaluatorPage() {
                         </select>
                       </div>
                     </div>
-                    
+
                     <div>
                       <label htmlFor="audience" className="block text-sm font-medium text-accent-readable mb-2">
                         Target Audience Description *
@@ -1043,16 +601,19 @@ export default function AdEvaluatorPage() {
                       />
                     </div>
 
-                    {/* Media Upload Section */}
-                    {(adData.adType === 'image' || adData.adType === 'video') && (
+                    {/* MEDIA UPLOAD: Now visible whenever an ad type is selected (except empty) and accepts image/video.
+                        For 'image' or 'video' adType we restrict accepted file types accordingly.
+                    */}
+                    {adData.adType && (
                       <div>
                         <label className="block text-sm font-medium text-accent-readable mb-2">
-                          Upload {adData.adType === 'image' ? 'Image' : 'Video'} File *
+                          Upload {adData.adType === 'image' ? 'Image' : adData.adType === 'video' ? 'Video' : 'Media'} File
+                          {mediaRequired ? ' *' : ' (optional)'}
                         </label>
                         <div
                           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                            isDragOver 
-                              ? 'border-orange-500 bg-orange-500/10' 
+                            isDragOver
+                              ? 'border-orange-500 bg-orange-500/10'
                               : 'border-orange-500/30 hover:border-orange-500/50'
                           }`}
                           onDrop={handleDrop}
@@ -1079,24 +640,27 @@ export default function AdEvaluatorPage() {
                                   {adData.mediaDuration && ` • ${adData.mediaDuration.toFixed(1)}s`}
                                 </p>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (adData.mediaUrl) cleanupTempFile(adData.mediaUrl);
-                                  setAdData(prev => ({ 
-                                    ...prev, 
-                                    mediaFile: undefined, 
-                                    mediaUrl: undefined,
-                                    mediaType: undefined,
-                                    mediaDuration: undefined,
-                                    mediaSize: undefined,
-                                    mediaResolution: undefined
-                                  }));
-                                }}
-                                className="text-sm text-orange-400 hover:text-orange-300"
-                              >
-                                Remove file
-                              </button>
+                              <div className="flex items-center justify-center space-x-3">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (adData.mediaUrl) cleanupTempFile(adData.mediaUrl);
+                                    setAdData(prev => ({
+                                      ...prev,
+                                      mediaFile: undefined,
+                                      mediaUrl: undefined,
+                                      mediaType: undefined,
+                                      mediaDuration: undefined,
+                                      mediaSize: undefined,
+                                      mediaResolution: undefined
+                                    }));
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                  }}
+                                  className="text-sm text-orange-400 hover:text-orange-300"
+                                >
+                                  Remove file
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <div className="space-y-3">
@@ -1108,7 +672,7 @@ export default function AdEvaluatorPage() {
                                   Drop your {adData.adType} file here or click to browse
                                 </p>
                                 <p className="text-sm text-readable">
-                                  Maximum 10MB • {adData.adType === 'image' ? 'JPG, PNG, GIF' : 'MP4, MOV, AVI'}
+                                  Maximum 10MB • {adData.adType === 'image' ? 'JPG, PNG, GIF' : adData.adType === 'video' ? 'MP4, MOV, AVI' : 'JPG, PNG, GIF, MP4'}
                                 </p>
                               </div>
                               <button
@@ -1121,7 +685,13 @@ export default function AdEvaluatorPage() {
                               <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept={adData.adType === 'image' ? 'image/*' : 'video/*'}
+                                accept={
+                                  adData.adType === 'image'
+                                    ? 'image/*'
+                                    : adData.adType === 'video'
+                                      ? 'video/*'
+                                      : 'image/*,video/*'
+                                }
                                 onChange={handleFileInputChange}
                                 className="hidden"
                               />
@@ -1130,10 +700,10 @@ export default function AdEvaluatorPage() {
                         </div>
                       </div>
                     )}
-                    
+
                     <button
                       type="submit"
-                      disabled={isLoading || !isFormValid || !canEvaluate}
+                      disabled={isLoading || !isFormValid}
                       className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-orange-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
                     >
                       {isLoading ? (
@@ -1141,38 +711,18 @@ export default function AdEvaluatorPage() {
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                           Analyzing Your Ad...
                         </>
-                      ) : !canEvaluate ? (
-                        <>
-                          {userInfo ? 'Daily Limit Reached' : 'Sign Up for More Evaluations'}
-                          <UserPlus className="ml-2 h-5 w-5" />
-                        </>
                       ) : (
                         <>
-                          Evaluate Ad ({remainingFreeUses} left)
+                          Analyze Ad
                           <Zap className="ml-2 h-5 w-5" />
                         </>
                       )}
                     </button>
-
-                    {!canEvaluate && !userInfo && (
-                      <div className="text-center">
-                        <p className="text-orange-400 mb-3">
-                          You've used all 3 free evaluations. Sign up to get 50 daily evaluations!
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setShowSignupForm(true)}
-                          className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-blue-700 transition-all"
-                        >
-                          Get 50 Free Daily Evaluations
-                        </button>
-                      </div>
-                    )}
                   </form>
                 </div>
               </div>
 
-              {/* Results Section */}
+              {/* Results */}
               <div>
                 {error && (
                   <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
@@ -1186,11 +736,8 @@ export default function AdEvaluatorPage() {
                 {result && (
                   <div className="space-y-6">
                     <div className="schema-card rounded-2xl p-8">
-                      <h3 className="text-2xl font-bold text-accent-readable mb-6">
-                        Professional Analysis Results
-                      </h3>
-                      
-                      {/* Enhanced Scores Grid */}
+                      <h3 className="text-2xl font-bold text-accent-readable mb-6">Professional Analysis Results</h3>
+
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
                         <div className="small-card text-center p-4">
                           <div className={`text-3xl font-bold mb-2 ${getScoreColor(result.scores.creativity)}`}>
@@ -1201,7 +748,7 @@ export default function AdEvaluatorPage() {
                             {getScoreLabel(result.scores.creativity)}
                           </div>
                         </div>
-                        
+
                         <div className="small-card text-center p-4">
                           <div className={`text-3xl font-bold mb-2 ${getScoreColor(result.scores.viability)}`}>
                             {result.scores.viability}
@@ -1211,7 +758,7 @@ export default function AdEvaluatorPage() {
                             {getScoreLabel(result.scores.viability)}
                           </div>
                         </div>
-                        
+
                         <div className="small-card text-center p-4">
                           <div className={`text-3xl font-bold mb-2 ${getScoreColor(result.scores.alignment)}`}>
                             {result.scores.alignment}
@@ -1221,7 +768,7 @@ export default function AdEvaluatorPage() {
                             {getScoreLabel(result.scores.alignment)}
                           </div>
                         </div>
-                        
+
                         <div className="small-card text-center p-4">
                           <div className={`text-3xl font-bold mb-2 ${getScoreColor(result.scores.engagement)}`}>
                             {result.scores.engagement}
@@ -1231,7 +778,7 @@ export default function AdEvaluatorPage() {
                             {getScoreLabel(result.scores.engagement)}
                           </div>
                         </div>
-                        
+
                         <div className="small-card text-center p-4">
                           <div className={`text-3xl font-bold mb-2 ${getScoreColor(result.scores.conversion)}`}>
                             {result.scores.conversion}
@@ -1241,7 +788,7 @@ export default function AdEvaluatorPage() {
                             {getScoreLabel(result.scores.conversion)}
                           </div>
                         </div>
-                        
+
                         <div className="small-card text-center p-4 bg-gradient-to-r from-orange-500/20 to-red-600/20 border-2 border-orange-500/50">
                           <div className={`text-4xl font-bold mb-2 ${getScoreColor(result.scores.overall)}`}>
                             {result.scores.overall}
@@ -1253,7 +800,6 @@ export default function AdEvaluatorPage() {
                         </div>
                       </div>
 
-                      {/* Media Analysis */}
                       {result.mediaAnalysis && (
                         <div className="small-card p-6 mb-6">
                           <h4 className="text-lg font-semibold text-accent-readable mb-4 flex items-center">
@@ -1289,23 +835,17 @@ export default function AdEvaluatorPage() {
                           </div>
                         </div>
                       )}
-                      
-                      {/* Detailed Analysis */}
+
                       <div className="small-card p-6 mb-6">
-                        <h4 className="text-lg font-semibold text-accent-readable mb-4">
-                          Detailed Professional Analysis
-                        </h4>
+                        <h4 className="text-lg font-semibold text-accent-readable mb-4">Detailed Professional Analysis</h4>
                         <div className="prose prose-sm max-w-none text-readable">
                           <div className="whitespace-pre-line">{result.analysis}</div>
                         </div>
                       </div>
-                      
-                      {/* Recommendations */}
+
                       {result.recommendations && result.recommendations.length > 0 && (
                         <div className="small-card p-6">
-                          <h4 className="text-lg font-semibold text-accent-readable mb-4">
-                            Priority Recommendations
-                          </h4>
+                          <h4 className="text-lg font-semibold text-accent-readable mb-4">Priority Recommendations</h4>
                           <ul className="space-y-3">
                             {result.recommendations.map((rec, index) => (
                               <li key={index} className="flex items-start space-x-3">
@@ -1318,17 +858,13 @@ export default function AdEvaluatorPage() {
                           </ul>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center justify-between p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
                         <div className="flex items-center">
                           <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                          <span className="text-green-300 font-medium">
-                            Analysis Complete - Professional Grade
-                          </span>
+                          <span className="text-green-300 font-medium">Analysis Complete - Professional Grade</span>
                         </div>
-                        <span className="text-sm text-green-400">
-                          {new Date(result.timestamp).toLocaleString()}
-                        </span>
+                        <span className="text-sm text-green-400">{new Date(result.timestamp).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -1337,12 +873,9 @@ export default function AdEvaluatorPage() {
                 {!result && !isLoading && (
                   <div className="schema-card rounded-2xl p-8 text-center">
                     <Target className="h-16 w-16 text-orange-400 mx-auto mb-6" />
-                    <h3 className="text-xl font-semibold text-accent-readable mb-4">
-                      Professional Ad Evaluation Ready
-                    </h3>
+                    <h3 className="text-xl font-semibold text-accent-readable mb-4">Professional Ad Evaluation Ready</h3>
                     <p className="text-readable mb-6">
-                      Fill out the comprehensive form to get algorithmic analysis using industry benchmarks 
-                      and platform-specific optimization recommendations.
+                      Fill out the comprehensive form to get algorithmic analysis using industry benchmarks and platform-specific optimization recommendations.
                     </p>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
@@ -1364,32 +897,6 @@ export default function AdEvaluatorPage() {
                     </div>
                   </div>
                 )}
-
-                {/* User Stats */}
-                {userStats && (
-                  <div className="schema-card rounded-2xl p-6 mt-6">
-                    <h4 className="text-lg font-semibold text-accent-readable mb-4">
-                      Your Usage Statistics
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4 text-center">
-                      <div>
-                        <div className="text-2xl font-bold text-orange-400">{userStats.totalEvaluations}</div>
-                        <div className="text-sm text-readable">Total Evaluations</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-orange-400">{userStats.remainingFreeUses}</div>
-                        <div className="text-sm text-readable">Remaining Today</div>
-                      </div>
-                    </div>
-                    {userStats.lastEvaluationDate && (
-                      <div className="mt-4 pt-4 border-t border-gray-700">
-                        <p className="text-sm text-readable">
-                          Last evaluation: {new Date(userStats.lastEvaluationDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -1402,99 +909,69 @@ export default function AdEvaluatorPage() {
       <section className="py-20 bg-black/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-accent-readable mb-4">
-              Advanced Evaluation Engine
-            </h2>
-            <p className="text-xl text-readable max-w-3xl mx-auto">
-              Professional-grade analysis using proprietary algorithms and industry data
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-accent-readable mb-4">Advanced Evaluation Engine</h2>
+            <p className="text-xl text-readable max-w-3xl mx-auto">Professional-grade analysis using proprietary algorithms and industry data</p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="small-card text-center p-6">
               <Target className="h-12 w-12 text-orange-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-accent-readable mb-3">
-                Multi-Factor Analysis
-              </h3>
-              <p className="text-readable text-sm">
-                Comprehensive evaluation of creativity, platform fit, audience alignment, engagement potential, and conversion optimization.
-              </p>
+              <h3 className="text-lg font-semibold text-accent-readable mb-3">Multi-Factor Analysis</h3>
+              <p className="text-readable text-sm">Comprehensive evaluation of creativity, platform fit, audience alignment, engagement potential, and conversion optimization.</p>
             </div>
-            
+
             <div className="small-card text-center p-6">
               <BarChart3 className="h-12 w-12 text-orange-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-accent-readable mb-3">
-                Industry Benchmarks
-              </h3>
-              <p className="text-readable text-sm">
-                Compare your ads against real industry data and platform-specific performance metrics from successful campaigns.
-              </p>
+              <h3 className="text-lg font-semibold text-accent-readable mb-3">Industry Benchmarks</h3>
+              <p className="text-readable text-sm">Compare your ads against real industry data and platform-specific performance metrics from successful campaigns.</p>
             </div>
-            
+
             <div className="small-card text-center p-6">
               <Lightbulb className="h-12 w-12 text-orange-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-accent-readable mb-3">
-                Actionable Insights
-              </h3>
-              <p className="text-readable text-sm">
-                Receive specific, implementable recommendations to improve your ad performance and maximize ROI.
-              </p>
+              <h3 className="text-lg font-semibold text-accent-readable mb-3">Actionable Insights</h3>
+              <p className="text-readable text-sm">Receive specific, implementable recommendations to improve your ad performance and maximize ROI.</p>
             </div>
-            
+
             <div className="small-card text-center p-6">
               <Zap className="h-12 w-12 text-orange-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-accent-readable mb-3">
-                Instant Results
-              </h3>
-              <p className="text-readable text-sm">
-                Get professional analysis in seconds with detailed scoring and optimization recommendations.
-              </p>
+              <h3 className="text-lg font-semibold text-accent-readable mb-3">Instant Results</h3>
+              <p className="text-readable text-sm">Get professional analysis in seconds with detailed scoring and optimization recommendations.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* How it works */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-accent-readable mb-4">
-              How Our Evaluation Works
-            </h2>
-            <p className="text-xl text-readable max-w-3xl mx-auto">
-              Our proprietary algorithm analyzes your ads using the same criteria that top advertising agencies use
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-accent-readable mb-4">How Our Evaluation Works</h2>
+            <p className="text-xl text-readable max-w-3xl mx-auto">Our proprietary algorithm analyzes your ads using the same criteria that top advertising agencies use</p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="text-center">
               <div className="bg-gradient-to-br from-orange-500 to-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-bold text-xl">1</span>
               </div>
               <h3 className="text-xl font-bold text-accent-readable mb-3">Input Your Ad</h3>
-              <p className="text-readable">
-                Provide your ad copy, target platform, audience details, and upload media files for comprehensive analysis.
-              </p>
+              <p className="text-readable">Provide your ad copy, target platform, audience details, and upload media files for comprehensive analysis.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="bg-gradient-to-br from-orange-500 to-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-bold text-xl">2</span>
               </div>
               <h3 className="text-xl font-bold text-accent-readable mb-3">Algorithm Analysis</h3>
-              <p className="text-readable">
-                Our advanced algorithms evaluate 50+ factors including platform requirements, industry benchmarks, and conversion psychology.
-              </p>
+              <p className="text-readable">Our advanced algorithms evaluate 50+ factors including platform requirements, industry benchmarks, and conversion psychology.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="bg-gradient-to-br from-orange-500 to-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-bold text-xl">3</span>
               </div>
               <h3 className="text-xl font-bold text-accent-readable mb-3">Get Results</h3>
-              <p className="text-readable">
-                Receive detailed scores, professional analysis, and specific recommendations to optimize your ad performance.
-              </p>
+              <p className="text-readable">Receive detailed scores, professional analysis, and specific recommendations to optimize your ad performance.</p>
             </div>
           </div>
         </div>
@@ -1502,27 +979,15 @@ export default function AdEvaluatorPage() {
 
       <DisplayAd />
 
-      {/* Call to Action */}
+      {/* CTA */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="schema-card rounded-3xl p-12 text-center max-w-4xl mx-auto">
             <Award className="w-16 h-16 text-orange-400 mx-auto mb-6" />
-            <h2 className="text-3xl md:text-4xl font-bold text-accent-readable mb-6">
-              Ready to Optimize Your Ads?
-            </h2>
-            <p className="text-xl text-readable mb-8 max-w-2xl mx-auto">
-              Join thousands of marketers who use our professional ad evaluator to improve their campaign performance and maximize ROI.
-            </p>
-            
+            <h2 className="text-3xl md:text-4xl font-bold text-accent-readable mb-6">Ready to Optimize Your Ads?</h2>
+            <p className="text-xl text-readable mb-8 max-w-2xl mx-auto">Start analyzing your ads for free now — no signup required.</p>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {!userInfo && (
-                <button
-                  onClick={() => setShowSignupForm(true)}
-                  className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-orange-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105"
-                >
-                  Start Free Analysis
-                </button>
-              )}
               <a
                 href="https://wa.me/923096194974?text=Hi! I'm interested in professional ad optimization services"
                 target="_blank"
